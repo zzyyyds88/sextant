@@ -1,10 +1,11 @@
-# chopin-ksu 任务板（TASKS）
+# Sextant 任务板（TASKS）
 
 > 状态：**远控主线已收敛，3.0 改名为 Core/Pilot**（2026-11-18）
 > 设计真源：`docs/DESIGN.md`（D6–D37）
 > 工作主机：本机 `/root/chopin-ksu`；外部研究资料 `/root/chopin-research/`
 > 设备：`adb -s <adb-serial>`（<device-model> / MIUI V14 / Android 13 / KernelSU 3.1.8）
 > 名称说明：2026-11-18 3.0 之前的记录使用旧名 `chopin-harness` / `chopin-remote` / `com.chopin.remote`；当前为 `chopin-core` / `chopin-pilot` / `com.chopin.pilot`。
+> 项目展示名：**Sextant**；技术标识仍为 `chopin-core` / `chopin` / `com.chopin.pilot`。
 
 ## 0. 当前结论
 

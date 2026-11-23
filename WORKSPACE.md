@@ -4,6 +4,7 @@
 > 当前方向：设备端单制品 —— KernelSU 模块以 root 拉起唯一 Go 守护（DESIGN D20–D37）
 > 本机工作区：`/root/chopin-ksu`
 > 外部研究资料：`/root/chopin-research/`（不纳入 Git，不是产品真源）
+> 展示名：**Sextant**；本地工作区路径仍为 `/root/chopin-ksu`，技术标识暂不迁移。
 
 ## 本机路径
 

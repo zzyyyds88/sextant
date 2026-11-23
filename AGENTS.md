@@ -1,6 +1,6 @@
-# chopin-ksu 协作规则（AGENTS.md）
+# Sextant 协作规则（AGENTS.md）
 
-> 本文件约束 agent 在本项目中的工作方式。项目对象：chopin（Redmi Note 10 Pro 5G / POCO X3 GT，<device-model>）的 MIUI 14 **远控**定制——设备端 KernelSU 模块 `chopin-core` + 零 root 客户端 `Chopin Pilot` + 电脑侧 `chopin` CLI。
+> 本文件约束 agent 在本项目中的工作方式。项目展示名：**Sextant**；项目对象：chopin（Redmi Note 10 Pro 5G / POCO X3 GT，<device-model>）的 MIUI 14 **远控**定制——设备端 KernelSU 模块 `chopin-core` + 零 root 客户端 `Chopin Pilot` + 电脑侧 `chopin` CLI。
 > 优先级：低于 `docs/DESIGN.md`（唯一设计真源），高于任何临时指令和旧会话记忆。
 > 本文件按 2026-11-18 新协助标准重写；模板中的通用规则与项目专有规则合并，不保留占位符。
 > 任何时候使用中文，除非用户明确要求英文输出。
@@ -9,7 +9,7 @@
 
 | 项 | 值 |
 |---|---|
-| 项目 | `chopin-ksu`——只负责远控；不维护其他 KSU 模块、不做 ROM 移植/镜像 |
+| 项目 | **Sextant**（展示名；技术标识仍为 `chopin-ksu` / `chopin-core` / `chopin`）——只负责远控；不维护其他 KSU 模块、不做 ROM 移植/镜像 |
 | 设计真源 | `docs/DESIGN.md`（D6–D37；D20–D37 为当前形态） |
 | 任务状态 | `docs/TASKS.md`（状态与真机验收记录，不是设计真源） |
 | 验收规则 | `docs/ACCEPTANCE.md`（三条判定：像用户操作、换通道复核、读审计日志） |

@@ -1,5 +1,7 @@
 # chopin（电脑侧命令行客户端）
 
+> Sextant 项目的电脑侧 CLI；可执行文件仍为 `chopin`。
+
 用电脑驱动 chopin 上的守护进程。第一次用 `chopin pair` 经 adb 完成配对，之后每条命令都是
 一条带证书 pin 的 HTTPS 请求。
 

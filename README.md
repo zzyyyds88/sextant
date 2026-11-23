@@ -1,4 +1,4 @@
-# chopin-ksu — 手机远控
+# Sextant — 手机远控
 
 > 当前方向（DESIGN D20–D37）：**设备端单制品**。
 > KernelSU 模块 `chopin-core` 是唯一设备端交付物，开机以 root 直接拉起唯一 Go 守护进程；
@@ -7,6 +7,8 @@
 >
 > **本工作区只负责远控。** ROM/反编译/移植等研究资料在 `/root/chopin-research/`，不属于交付物；
 > 需要查证据时去那里看。
+>
+> 命名：**Sextant** 是项目展示名；CLI 仍为 `chopin`，设备端模块仍为 `chopin-core`，APK 包名仍为 `com.chopin.pilot`。技术标识在迁移前保持不变。
 
 ## 文档入口
 
@@ -129,7 +131,7 @@ priv-app 安装和 MIUI 后台策略都是按这个 ROM 实测的；换设备必
 ## 仓库目录
 
 ```text
-chopin-ksu/
+sextant/
 ├── docs/
 │   ├── DESIGN.md              # 唯一设计真源（D6–D37）
 │   ├── TASKS.md               # 切片状态 + 真机验收记录

@@ -1,4 +1,4 @@
-# chopin-ksu 设计基线（远控专用）
+# Sextant 设计基线（远控专用）
 
 > 状态：**当前有效（v3 工作区收敛，2026-11-18）**
 > Owner：项目用户；执行 agent 只能在确认范围内修改
@@ -7,6 +7,8 @@
 > 本工作区**只负责远控**：KernelSU 模块 `chopin-core`、零 root 客户端 APK `apps/pilot`、电脑侧 CLI `apps/pc-cli`。
 > ROM/反编译/移植等研究资料已迁到 `/root/chopin-research/`，**不属于交付物，也不作为设计真源**；需要查证据时去那里看。
 > 本工作区不再维护 `chopin-compat`、`miui14-agent-tune` 或其他 KSU 模块。
+>
+> 命名：**Sextant** 是项目展示名；技术标识（`chopin-core`、`chopin` CLI、`com.chopin.pilot`）暂保留。
 
 ---
 

@@ -1,5 +1,7 @@
 # Chopin Pilot（chopin-pilot，客户端 APK）
 
+> Sextant 项目的客户端 APK；当前应用名与包名仍为 Chopin Pilot / `com.chopin.pilot`。
+
 一个**零 root** 客户端：状态页 + 无障碍 HUD + 输入法。设备端的全部特权工作都由
 KernelSU 模块 `chopin-core` 以 root 拉起的守护进程完成（`docs/DESIGN.md` D20/D21）。
 

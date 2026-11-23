@@ -1,5 +1,7 @@
 # Chopin Core（chopin-core，设备端制品）
 
+> Sextant 项目的设备端制品；模块 ID 仍为 `chopin-core`。
+
 chopin 的**唯一设备端交付物**：一个 KernelSU 模块。模块开机以 root 拉起唯一 Go 守护进程，
 它负责全部特权语义（无障碍绑定与保活、MIUI 后台/权限放行、解锁、输入注入、截图/UI 树、
 会话、状态、审计），并负责安装零 root 的客户端 APK。
