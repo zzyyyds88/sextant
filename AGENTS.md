@@ -1,6 +1,6 @@
 # Sextant 协作规则（AGENTS.md）
 
-> 本文件约束 agent 在本项目中的工作方式。项目展示名：**Sextant**；项目对象：chopin（Redmi Note 10 Pro 5G / POCO X3 GT，<device-model>）的 MIUI 14 **远控**定制——设备端 KernelSU 模块 `chopin-core` + 零 root 客户端 `Chopin Pilot` + 电脑侧 `chopin` CLI。
+> 本文件约束 agent 在本项目中的工作方式。项目展示名：**Sextant**；项目对象：chopin（Redmi Note 10 Pro 5G / POCO X3 GT，<device-model>）的 MIUI 14 **远控**定制——设备端 KernelSU 模块 `sextant-core` + 零 root 客户端 `Sextant Pilot` + 电脑侧 `sextant` CLI。
 > 优先级：低于 `docs/DESIGN.md`（唯一设计真源），高于任何临时指令和旧会话记忆。
 > 本文件按 2026-11-18 新协助标准重写；模板中的通用规则与项目专有规则合并，不保留占位符。
 > 任何时候使用中文，除非用户明确要求英文输出。
@@ -9,13 +9,13 @@
 
 | 项 | 值 |
 |---|---|
-| 项目 | **Sextant**（展示名；技术标识仍为 `chopin-ksu` / `chopin-core` / `chopin`）——只负责远控；不维护其他 KSU 模块、不做 ROM 移植/镜像 |
-| 设计真源 | `docs/DESIGN.md`（D6–D37；D20–D37 为当前形态） |
+| 项目 | **Sextant**（CLI `sextant`、模块 `sextant-core`、APK `com.sextant.pilot`；旧 `chopin-*` 标识按 D38 迁移后删除）——只负责远控；不维护其他 KSU 模块、不做 ROM 移植/镜像 |
+| 设计真源 | `docs/DESIGN.md`（D6–D38；D20–D38 为当前形态） |
 | 任务状态 | `docs/TASKS.md`（状态与真机验收记录，不是设计真源） |
 | 验收规则 | `docs/ACCEPTANCE.md`（三条判定：像用户操作、换通道复核、读审计日志） |
-| Owner | 设备端特权语义唯一 owner：`modules/chopin-core/src`（Go 守护） |
-| 构建 | `tools/scripts/build-core.sh` → `tools/scripts/build-module.sh modules/chopin-core`；`apps/pilot/build.sh`；`apps/pc-cli/build.sh` |
-| 验收命令 | `tools/scripts/run-all-static.sh`；`chopin acceptance`；`chopin journey`；`tools/scripts/device-acceptance.sh` |
+| Owner | 设备端特权语义唯一 owner：`modules/sextant-core/src`（Go 守护） |
+| 构建 | `tools/scripts/build-core.sh` → `tools/scripts/build-module.sh modules/sextant-core`；`apps/pilot/build.sh`；`apps/pc-cli/build.sh` |
+| 验收命令 | `tools/scripts/run-all-static.sh`；`sextant acceptance`；`sextant journey`；`tools/scripts/device-acceptance.sh` |
 | 设备 | `adb -s <adb-serial>`（<device-model> / MIUI 14 / Android 13 / KernelSU 3.1.8） |
 | 外部研究 | `/root/chopin-research/`（只查证据，不是交付物，不是设计真源） |
 
@@ -50,8 +50,8 @@
 开工前先确认三件事：
 
 1. **真源在哪**：按 §14 真源优先级确认；没有指定真源时，当前源码、测试、配置、日志、git 状态就是真源。
-2. **owner 在哪**：设备端特权语义归 `modules/chopin-core/src` 管；`apps/pilot` 只做状态展示/HUD/IME/凭据录入；`apps/pc-cli` 只做协议映射；模块 shell 只做生命周期。adapter / UI / CLI / shell 不拥有业务语义，不私造状态与结论。
-3. **验收怎么算过**：`tools/scripts/run-all-static.sh` + 对应真机验收（`chopin acceptance` / `chopin journey` / 设备证据）。三者拿不到就先审计并说明缺什么，不得边猜边做。
+2. **owner 在哪**：设备端特权语义归 `modules/sextant-core/src` 管；`apps/pilot` 只做状态展示/HUD/IME/凭据录入；`apps/pc-cli` 只做协议映射；模块 shell 只做生命周期。adapter / UI / CLI / shell 不拥有业务语义，不私造状态与结论。
+3. **验收怎么算过**：`tools/scripts/run-all-static.sh` + 对应真机验收（`sextant acceptance` / `sextant journey` / 设备证据）。三者拿不到就先审计并说明缺什么，不得边猜边做。
 
 编码或执行高风险操作前，推理闸至少回答：
 
@@ -71,9 +71,9 @@
 ## 4. 项目边界
 
 - **做**：KernelSU 模块（Go 守护 + 少量生命周期 shell + systemless overlay / settings / AppOps / 组件）+ 零 root APK + PC CLI；基于真机证据；模块安装/卸载可逆。
-- **不做**：刷镜像、改 system/vendor 分区、动 vbmeta/AVB、relock BL、清用户数据、`pm uninstall` / `disable-user` 预装应用（唯一例外是本项目自己的 `com.chopin.*`）、镜像重打包、源码级 MIUI/HyperOS 重建、在本机做全量 AOSP/LineageOS 编译、ROM 移植。
-- **已否定方向**：把能力拆成「权限层模块 + 独立远控软件」两套（D18/D19，已由 D20 取代）；APK 持 root 再拉起引擎（D21 取代）；用 KernelSU allowlist 给 APK 授予 root（D21 删除）；让 APK 解析 CLI 文本读状态（D23 取代）；旧 hub 侧远程代解锁（改为设备本机解锁）；与守护平行的第二套命令面或第二个状态真源；能力降级/只读兜底/假成功（D25 禁止）。
-- **不保留旧版本回退**：D27 的 Core/Pilot 迁移已完成；旧模块 zip/APK 备份、旧路径迁移兜底、双版本兼容已删除。升级只支持 `chopin-core` 自身版本前进。
+- **不做**：刷镜像、改 system/vendor 分区、动 vbmeta/AVB、relock BL、清用户数据、`pm uninstall` / `disable-user` 预装应用（唯一例外是本项目自己的 `com.sextant.*`）、镜像重打包、源码级 MIUI/HyperOS 重建、在本机做全量 AOSP/LineageOS 编译、ROM 移植。
+- **已否定方向**：把能力拆成「权限层模块 + 独立远控软件」两套（D18/D19，已由 D20 取代）；APK 持 root 再拉起引擎（D21 取代）；用 KernelSU allowlist 给 APK 授予 root（D21 删除）；让 APK 解析 CLI 文本读状态（D23 取代）；`.95` 侧远程代解锁（改为设备本机解锁）；与守护平行的第二套命令面或第二个状态真源；能力降级/只读兜底/假成功（D25 禁止）。
+- **不保留旧版本回退**：D27 的 Core/Pilot 迁移已完成；旧模块 zip/APK 备份、旧路径迁移兜底、双版本兼容已删除。升级只支持 `sextant-core` 自身版本前进。
 - 不为了速度删除对账、身份、权限、审计、验证、实机证据、用户可见状态或数据完整性字段。
 - 所有外部输入、队列、缓存、请求体、响应体、会话窗口、文件大小、重试、超时和后台 worker 都要有上界、背压、释放或降级策略；禁止无界增长和永久常驻的隐性运行面。
 - 用户明确否定过的概念必须从代码、文档、命名里删干净，不许换名保留。
@@ -135,7 +135,7 @@
 
 - 生成的文案、说明、话术：简洁直给，不堆形容词，不带动画式 emoji，非必要不空行；用户已有模板时严格套模板。
 - 对外文档只写使用、配置、部署、排障；内部架构与治理写进 `docs/DESIGN.md`。
-- 用户可见文案分两类，各有真源：HUD/无障碍（Kotlin 侧）走 `apps/pilot/app/res/values/strings.xml`；状态页（`MainActivity`）与引擎错误原因是纯 Java/Go 字面量，与 `strings.xml` 术语保持同一套说法。不要一半资源一半字面量地新造第三套文案。模块侧运维输出走 `chopin-core ctl` 命令面。
+- 用户可见文案分两类，各有真源：HUD/无障碍（Kotlin 侧）走 `apps/pilot/app/res/values/strings.xml`；状态页（`MainActivity`）与引擎错误原因是纯 Java/Go 字面量，与 `strings.xml` 术语保持同一套说法。不要一半资源一半字面量地新造第三套文案。模块侧运维输出走 `sextant-core ctl` 命令面。
 - 完成定义必须包含可验证结果、未闭合风险和下一步边界；禁止偷懒、糊弄和留尾巴。
 
 ## 10. Git、安全与仓库边界
@@ -145,7 +145,7 @@
 - 写代码前先看 `git status --short`；不干净先处理，不混入用户未授权的改动。
 - 禁止 `git add .`，只 stage 本任务文件；禁止 force-add ignored 文件，除非用户明确点名路径并要求。
 - 公开仓库禁止提交密钥、令牌、私钥、真实用户数据、含凭据的 URL；私有仓库可提交，但必须先确认远程仓库确为私有且不会被公开。日志与报告同样不许泄露。
-- 本项目 D26 的图案凭据是**工作区本地文件** `modules/chopin-core/config/unlock-secret`（0600，gitignore），构建时由 `build-module.sh` 校验并打包；**不入 Git**。运行时不进 argv/日志/API/审计。`adbhome/.android/adbkey`（0600）不打印、不提交、不复制。
+- 本项目 D26 的图案凭据是**工作区本地文件** `modules/sextant-core/config/unlock-secret`（0600，gitignore），构建时由 `build-module.sh` 校验并打包；**不入 Git**。运行时不进 argv/日志/API/审计。`adbhome/.android/adbkey`（0600）不打印、不提交、不复制。
 - 主分支禁止 `reset --hard`、`push --force`、`clean -f`；功能分支允许 force push，但先确认没有他人在用该分支。其余破坏性命令仍需用户明确要求并确认风险。
 - 嵌套仓库统一在根仓库提交，不单独提交子仓库；`reference/`、`.uploads/` 不进版本管理。本工作区当前没有嵌套仓库。
 - 根仓库只跟踪远控主线：文档、脚本、配置、模块源码、APK/CLI 源码。不纳入 `adbhome/`、`tools/` 第三方工具链、`modules/*.zip`、`apps/pilot/dist/`、`apps/pilot/build/`、`apps/pilot/lib/scrcpy-server*`、`out/`、`.uploads/`。以 `.gitignore` 为准。
@@ -171,7 +171,7 @@
 ### `platform/kernelsu-miui14`
 applies_when: "改动 KernelSU 模块、boot 时序、无障碍设置键或 MIUI 后台策略"
 authority: "低于 docs/DESIGN.md，高于普通建议"
-verification: "tools/scripts/run-all-static.sh；tools/scripts/device-acceptance.sh；设备侧 `chopin-core ctl status`"
+verification: "tools/scripts/run-all-static.sh；tools/scripts/device-acceptance.sh；设备侧 `sextant-core ctl status`"
 
 - **root 宿主是模块，不是 APK**：`service.sh` 由 KernelSU 以 root 运行（实测 uid 0、SELinux `u:r:su:s0`），直接 `exec` 守护。不要再引入 KernelSU allowlist 授予、不要再要求“重启一次才拿到 root”、不要给 APK root。
 - 守护必须在锁屏下可用：`health`/`status`/`device`/`input` 不依赖 CE，不等待解锁；需要 CE 的动作（启动 Activity、HUD、APK 私有目录）在解锁后执行，未就绪返回结构化 `pending`。
@@ -180,8 +180,8 @@ verification: "tools/scripts/run-all-static.sh；tools/scripts/device-acceptance
 - AMS 持久化短形式（`pkg/.Svc`）：比较前规范化为 `pkg/pkg.Svc`，否则越写越多重复。
 - 锁屏/CE 不可用时不反复重写无障碍，也不把正常状态报成故障；锁屏态如实写 `PENDING` + 原因。
 - `a11y` 与 `a11y_compat` 两个组件都必须真的绑定；只写 settings 不算。
-- **priv-app overlay 不能单独运行**：这个 ROM 的 App 进程读不到 `/system/priv-app/ChopinPilot/ChopinPilot.apk`（ResourcesManager ENOENT → ContextImpl NPE）。必须同时保留 `/data/app` 更新副本；`service.sh` 在只有 priv-app 路径时也 `pm install -r`，包保持 `PRIVILEGED` + `UPDATED_SYSTEM_APP`。
-- 守护先于首次解锁启动时，`/data/user/0/com.chopin.pilot` 不可用；`publishAppFiles` 必须在 keepalive 中重试，解锁后发布 `status.json`/`api.json`/`app-token`/`hud.json`。
+- **priv-app overlay 不能单独运行**：这个 ROM 的 App 进程读不到 `/system/priv-app/SextantPilot/SextantPilot.apk`（ResourcesManager ENOENT → ContextImpl NPE）。必须同时保留 `/data/app` 更新副本；`service.sh` 在只有 priv-app 路径时也 `pm install -r`，包保持 `PRIVILEGED` + `UPDATED_SYSTEM_APP`。
+- 守护先于首次解锁启动时，`/data/user/0/com.sextant.pilot` 不可用；`publishAppFiles` 必须在 keepalive 中重试，解锁后发布 `status.json`/`api.json`/`app-token`/`hud.json`。
 - 模块必须保留 `uninstall.sh`、日志和回退路径（卸载可逆；旧版本回退不保留）；改 boot 行为前先备份 boot。
 - 卸载必须可逆：写入前记录基线到 `state/baseline/`，`uninstall.sh` 停守护、卸 APK、按基线还原、保留最后一份日志到 `/data/local/tmp/`。
 - 本工作区不再维护第二个 KSU 模块；不要引入 `chopin-compat` 式的 ROM 行为修正层或第二个 a11y owner。
@@ -198,7 +198,7 @@ verification: "sh -n + dash -n + busybox sh -n（run-all-static.sh 已含）"
 - 每条外部命令都要有退出码判断；禁止静默吞错，禁止用固定字符串代替真实失败原因。
 
 ### `language/go`
-applies_when: "改动 modules/chopin-core/src（守护）或 apps/pc-cli"
+applies_when: "改动 modules/sextant-core/src（守护）或 apps/pc-cli"
 authority: "低于 docs/DESIGN.md，高于普通建议"
 verification: "GOPROXY=off go vet ./... && go test ./...；gofmt -l 必须为空"
 
@@ -217,9 +217,9 @@ authority: "低于 docs/DESIGN.md，高于普通建议"
 verification: "apps/pilot/build.sh；apps/pilot/tools/verify-apk.sh"
 
 - 没有 Gradle，构建是 `javac`/`kotlinc` + `d8` + `aapt2` + `apksigner`，入口 `apps/pilot/build.sh`（底层 `apps/pilot/assemble.sh`）。不要引入 Gradle/Maven 工程。
-- **APK 零 root**：不得出现 `su`、不得申请 KernelSU 授权、不得拉起引擎进程、不得写 `enabled_accessibility_services` 或 allowlist。唯一允许的特权动作是经 `chopin-core ctl secret set-unlock` 写解锁凭据（值经 stdin，不读回）。
+- **APK 零 root**：不得出现 `su`、不得申请 KernelSU 授权、不得拉起引擎进程、不得写 `enabled_accessibility_services` 或 allowlist。唯一允许的特权动作是经 `sextant-core ctl secret set-unlock` 写解锁凭据（值经 stdin，不读回）。
 - 状态只能读 `state/app/status.json`（守护发布的副本），禁止解析任何 CLI 文本。字段与 `/v1/status` 完全一致，`schema` 不匹配要显式报错。
-- IME 三字段必须分开：`ime_service`（`com.chopin.pilot/.ime.RemoteImeService`）与 `ime_provider`（`com.chopin.pilot.ime`）不是同一个字符串；混用会让文字注入永远失败。
+- IME 三字段必须分开：`ime_service`（`com.sextant.pilot/.ime.RemoteImeService`）与 `ime_provider`（`com.sextant.pilot.ime`）不是同一个字符串；混用会让文字注入永远失败。
 - IME 输入视图是 48dp 高的 `TextView`；0/1dp 空 View 在 MIUI 上会让 insets 动画把目标应用内容截成空白。
 - 反射调用系统隐藏 API 时必须写清依据（AOSP 方法语义 + 实机 A/B 证据）。`registerUiTestAutomationService` 必须带 `FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES(1)`，否则运行期间全机第三方无障碍服务被静默解绑；这条已搬到守护的 helper 侧，`check-contracts.sh` 继续锁着。
 - 窗口层次/手势类能力必须区分“系统层面不可用”与“当前状态不可用”，并把原因结构化返回。
@@ -230,9 +230,9 @@ applies_when: "通过 ADB、设备验收脚本或设备侧服务操作 chopin"
 authority: "低于 docs/DESIGN.md，高于普通建议"
 verification: "adb devices；tools/scripts/device-acceptance.sh；out/device-acceptance-* 证据包"
 
-- 设备序列用 `--serial` 或 `CHOPIN_SERIAL` 指定；脚本用 `SERIAL` 覆盖。
-- 首次鉴权走 adb 配对（D24）：`chopin pair --serial <adb>` 经 `adb shell su -c 'chopin-core ctl pair new'` 取一次性码再换 token。不得把 token 预置进仓库。
-- 运行时凭据只经 stdin 写入 `/data/adb/chopin-core/config/{unlock-secret,sim-pin}`（0600，root）；不进 argv、不进 API 请求/响应、不进日志、不进审计；状态查询只返回“存在/不存在”。
+- 设备序列用 `--serial` 或 `SEXTANT_SERIAL` 指定；脚本用 `SERIAL` 覆盖。
+- 首次鉴权走 adb 配对（D24）：`sextant pair --serial <adb>` 经 `adb shell su -c 'sextant-core ctl pair new'` 取一次性码再换 token。不得把 token 预置进仓库。
+- 运行时凭据只经 stdin 写入 `/data/adb/sextant-core/config/{unlock-secret,sim-pin}`（0600，root）；不进 argv、不进 API 请求/响应、不进日志、不进审计；状态查询只返回“存在/不存在”。
 - `adbhome/.android/adbkey`（0600）是敏感材料：不打印、不提交、不复制。
 - 高风险动作（清数据、刷机、改分区、relock BL、覆盖 boot/vbmeta、删设备侧备份、`pm uninstall` 预装应用）必须单独获得用户明确确认。
 - 锁屏造成的“不可验证”必须如实 skip，不得报成 FAIL；反过来也不得把“锁屏所以没验”说成通过。
@@ -248,7 +248,7 @@ verification: "tools/scripts/run-all-static.sh"
 - 规模上限：≤ 60 项。静态层只覆盖“编译与契约”：`gofmt` / `go vet` / `go build`、`sh -n`、跨产物契约、APK 可构建且无 root 残留、文档索引。能力正确性以真机验收为准，不要用静态项数替代真机证据。
 - 新增可被破坏的约束时，把断言加到 `check-contracts.sh`（跨产物）/ `check-docs.sh`（文档漂移）/ 对应 Go 单测，而不是靠人记得。
 - 回归测试要双向断言：既断言“该生效时生效”，也断言“不该生效时不生效”。真机故障的回归先断言旧写法确实失败。
-- 测试夹具必须来自真实设备输出，不能凭想象构造。`apps/pilot/build/keystore/`、`out/`、`modules/*.zip`、`apps/*/dist/` 都是产物，不得入库；若新增设备夹具，放在 `modules/chopin-core/tests/` 下并纳入 Git 跟踪（当前该目录只有 `.gitignore` 与遗留 `tests/bin/allowlist-tool`，没有 fakedev 夹具）。
+- 测试夹具必须来自真实设备输出，不能凭想象构造。`apps/pilot/build/keystore/`、`out/`、`modules/*.zip`、`apps/*/dist/` 都是产物，不得入库；若新增设备夹具，放在 `modules/sextant-core/tests/` 下并纳入 Git 跟踪（当前该目录只有 `.gitignore` 与遗留 `tests/bin/allowlist-tool`，没有 fakedev 夹具）。
 - 当前工作区没有 `installer-test.sh`；若将来恢复 KernelSU 安装器测试，不得放宽任何沙箱守卫，且必须把测试写入限制在沙箱目录。
 - warning、lint warning、格式漂移、生成物漂移、文档索引缺失和本轮 TODO/TBD 都按缺陷处理；除非明确记录为非本轮债务，否则不能带着它们声称完成。
 

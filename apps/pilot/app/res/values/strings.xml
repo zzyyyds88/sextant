@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Chopin Pilot</string>
-    <string name="phone_a11y_label">Chopin Pilot 手机操控</string>
-    <string name="phone_a11y_description">只在你让 Chopin Pilot 操作手机时工作：显示当前任务状态，并提供暂停、停止和最近步骤。它不会读取或上传屏幕内容，也不会替你修改系统设置。</string>
-    <string name="overlay_ball_running">Chopin Pilot 正在操作手机，点按展开，按住停止</string>
+    <string name="app_name">Sextant Pilot</string>
+    <string name="phone_a11y_label">Sextant Pilot 手机操控</string>
+    <string name="phone_a11y_description">只在你让 Sextant Pilot 操作手机时工作：显示当前任务状态，并提供暂停、停止和最近步骤。它不会读取或上传屏幕内容，也不会替你修改系统设置。</string>
+    <string name="overlay_ball_running">Sextant Pilot 正在操作手机，点按展开，按住停止</string>
     <string name="overlay_ball_paused">已暂停，点按展开，按住停止</string>
-    <string name="overlay_ball_waiting">Chopin Pilot 在等你确认，点按展开</string>
+    <string name="overlay_ball_waiting">Sextant Pilot 在等你确认，点按展开</string>
     <string name="overlay_ball_stopped">已停止</string>
     <string name="overlay_collapse">收起详情</string>
     <string name="overlay_expand">展开详情</string>
     <string name="overlay_fold">收成小球</string>
     <string name="overlay_fold_row">收成小球</string>
     <string name="overlay_hold_hint">按住小球 1 秒可直接停止</string>
-    <string name="overlay_stop_description">停止 Chopin Pilot 的操作</string>
+    <string name="overlay_stop_description">停止 Sextant Pilot 的操作</string>
     <string name="overlay_move_left">移到左侧</string>
     <string name="overlay_move_centre">移到中间</string>
     <string name="overlay_move_right">移到右侧</string>
@@ -23,7 +23,7 @@
     <string name="overlay_unlocks_review">查看</string>
     <string name="overlay_unlock_system">系统设置</string>
     <string name="overlay_unlock_secrets">密码和验证码</string>
-    <string name="overlay_unlock_own_app">Chopin Pilot 自身</string>
+    <string name="overlay_unlock_own_app">Sextant Pilot 自身</string>
     <string name="overlay_list_separator">、</string>
     <string name="overlay_preview_readonly">后台屏预览，仅供查看</string>
     <string name="overlay_preview_waiting">等待后台屏画面…</string>
@@ -57,7 +57,7 @@
     <string name="overlay_handoff_hint">完成后点继续；不想继续就停止。</string>
     <string name="overlay_unlocked">已解除限制</string>
     <string name="overlay_unlocked_description">查看已解除的限制</string>
-    <string name="overlay_window_title">Chopin Pilot 悬浮控制</string>
+    <string name="overlay_window_title">Sextant Pilot 悬浮控制</string>
     <string name="phone_waived_status">已获准：%1$s</string>
     <string name="phone_acting">正在操作：%1$s</string>
     <string name="phone_prompt_allow_visual">本任务允许查看屏幕</string>
@@ -67,7 +67,7 @@
     <plurals name="overlay_seconds_remaining">
         <item quantity="other">剩余 %1$d 秒</item>
     </plurals>
-    <string name="subtype_name">Chopin Pilot</string>
-    <string name="ime_label">Chopin Pilot 输入</string>
+    <string name="subtype_name">Sextant Pilot</string>
+    <string name="ime_label">Sextant Pilot 输入</string>
     <string name="phone_a11y_compat_description">兼容服务：不读取任何内容，也不执行任何操作。它的唯一作用是让个别对无障碍服务挑名字的 App（如微信）愿意把界面结构交给我们另一个真正干活的辅助服务。</string>
 </resources>

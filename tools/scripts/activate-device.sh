@@ -14,8 +14,8 @@ set -uo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 SERIAL=${SERIAL:-}
-MOD=chopin-core
-CLI=${CLI:-$ROOT/apps/pc-cli/dist/chopin-linux-amd64}
+MOD=sextant-core
+CLI=${CLI:-$ROOT/apps/pc-cli/dist/sextant-linux-amd64}
 ZIP="$ROOT/modules/$MOD.zip"
 
 say()  { printf '\n== %s ==\n' "$1"; }
@@ -41,14 +41,14 @@ say "stop the daemon (its binary is about to be replaced)"
 # the new one too early fails with "another daemon already holds the lock" and the
 # device ends up with no daemon at all. pgrep -x matches comm exactly, so this
 # cannot match the su/shell that is running the check (pkill -f could, and did).
-SU 'if [ -f /data/adb/chopin-core/state/engine.pid ]; then kill "$(cat /data/adb/chopin-core/state/engine.pid)" 2>/dev/null; fi; i=0; while [ $i -lt 150 ] && pgrep -x chopin-core >/dev/null 2>&1; do sleep 0.2; i=$((i+1)); done; pgrep -x chopin-core >/dev/null 2>&1 && pkill -9 -x chopin-core; pkill -f HelperMain 2>/dev/null; true' >/dev/null
+SU 'if [ -f /data/adb/sextant-core/state/engine.pid ]; then kill "$(cat /data/adb/sextant-core/state/engine.pid)" 2>/dev/null; fi; i=0; while [ $i -lt 150 ] && pgrep -x sextant-core >/dev/null 2>&1; do sleep 0.2; i=$((i+1)); done; pgrep -x sextant-core >/dev/null 2>&1 && pkill -9 -x sextant-core; pkill -f HelperMain 2>/dev/null; true' >/dev/null
 info "stopped"
 
 say "copy the staged tree over the live module"
 SU "cp -a /data/adb/modules_update/$MOD/. /data/adb/modules/$MOD/ && rm -rf /data/adb/modules_update/$MOD && echo copied" | sed 's/^/   /'
 
 say "start the daemon the same way service.sh does"
-SU "setsid /data/adb/modules/$MOD/bin/chopin-core daemon --config /data/adb/chopin-core/config/core.json </dev/null >>/data/adb/chopin-core/log/core.log 2>&1 &" >/dev/null
+SU "setsid /data/adb/modules/$MOD/bin/sextant-core daemon --config /data/adb/sextant-core/config/core.json </dev/null >>/data/adb/sextant-core/log/core.log 2>&1 &" >/dev/null
 
 say "wait for it to answer"
 ready=0
@@ -56,12 +56,12 @@ for _ in $(seq 1 40); do
     if "$CLI" health 2>/dev/null | grep -q '"ok"'; then ready=1; break; fi
     sleep 2
 done
-[ "$ready" = 1 ] || die "the daemon did not answer; see adb -s $SERIAL shell su -c 'tail -30 /data/adb/chopin-core/log/core.log'"
+[ "$ready" = 1 ] || die "the daemon did not answer; see adb -s $SERIAL shell su -c 'tail -30 /data/adb/sextant-core/log/core.log'"
 info "daemon answering"
 "$CLI" status 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print("   a11y", d["app"]["a11y"]["state"], "| bg_ok", d["app"]["bg"]["ok"])' 2>/dev/null || true
 
 say "install the client APK if it changed"
-# The APK is NOT part of the module: it lives in /data/app as com.chopin.pilot, so
+# The APK is NOT part of the module: it lives in /data/app as com.sextant.pilot, so
 # copying the module tree does nothing for it. This script claimed to cover "APK
 # changes" and did not — measured: the installed base.apk's sha256 differed from
 # every build produced for two hours, and a fixed overlay behaviour never appeared on
@@ -70,7 +70,7 @@ say "install the client APK if it changed"
 APK=$(ls -1t "$ROOT"/apps/pilot/dist/*.apk 2>/dev/null | head -1)
 if [ -n "$APK" ]; then
     want=$(sha256sum "$APK" | cut -d' ' -f1)
-    have=$(SU "sha256sum /data/app/*/com.chopin.pilot*/base.apk 2>/dev/null" | head -1 | awk '{print $1}')
+    have=$(SU "sha256sum /data/app/*/com.sextant.pilot*/base.apk 2>/dev/null" | head -1 | awk '{print $1}')
     if [ "$want" = "$have" ]; then
         info "APK already current ($(basename "$APK"))"
     else
@@ -84,7 +84,7 @@ if [ -n "$APK" ]; then
         # received garbage). awk with a double-quoted program is quote-safe here.
         have2=""
         for _ in $(seq 1 10); do
-            have2=$(SU "sha256sum \$(ls -d /data/app/*/com.chopin.pilot*/base.apk 2>/dev/null | tail -1)" \
+            have2=$(SU "sha256sum \$(ls -d /data/app/*/com.sextant.pilot*/base.apk 2>/dev/null | tail -1)" \
                     | awk '{print $1}')
             [ "$want" = "$have2" ] && break
             sleep 1

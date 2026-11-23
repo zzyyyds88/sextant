@@ -13,6 +13,7 @@
 
 - 发布 key 的密码在 `~/.chopin-release-secrets/keystore.pass`（0600），与 keystore 分目录。
 - 两者都是**本地自签名**，不是公开 CA。Android 只要求“升级用同一 key”；发布时必须公布证书 SHA-256，让用户核对。
+- 为保持签名连续性，发布 key 沿用旧 alias `com.chopin.pilot`、旧 DN `CN=com.chopin.pilot` 和旧目录 `~/.chopin-release`；这些只是签名材料标识，产品运行时不再使用。构建时用 `SEXTANT_KEY_ALIAS` 指定真实 alias。
 - 发布资产再用 GPG 分离签名：
   - 公钥：`docs/release-key.asc`
   - 指纹：`61D77EFA0C40FD2F01BEB5AEA395B798CB069049`
@@ -28,32 +29,33 @@
 ## 构建 release
 
 ```bash
-CHOPIN_RELEASE=1 \
-CHOPIN_KEYSTORE="$HOME/.chopin-release/chopin-release.jks" \
-CHOPIN_KEYSTORE_PASS_FILE="$HOME/.chopin-release-secrets/keystore.pass" \
+SEXTANT_RELEASE=1 \
+SEXTANT_KEY_ALIAS=com.chopin.pilot \
+SEXTANT_KEYSTORE="$HOME/.chopin-release/chopin-release.jks" \
+SEXTANT_KEYSTORE_PASS_FILE="$HOME/.chopin-release-secrets/keystore.pass" \
 apps/pilot/build.sh
 ```
 
 输出：
 
-- `apps/pilot/dist/chopin-pilot-<version>.apk`
+- `apps/pilot/dist/sextant-pilot-<version>.apk`
 - 同名 `.sha256`
 - 证书 DN 与 SHA-256 指纹
 
-release 模式不会自动生成 key；缺 `CHOPIN_KEYSTORE`、缺 `CHOPIN_KEYSTORE_PASS_FILE` 或文件不存在都会失败。密码通过 `env:` 传给 `apksigner`，不出现在 argv；仍不要执行 `set -x`，也不要把密码写进构建日志。
+release 模式不会自动生成 key；缺 `SEXTANT_KEYSTORE`、缺 `SEXTANT_KEYSTORE_PASS_FILE` 或文件不存在都会失败。密码通过 `env:` 传给 `apksigner`，不出现在 argv；仍不要执行 `set -x`，也不要把密码写进构建日志。
 
 ## 生成发布包
 
 ```bash
-tools/scripts/build-module.sh modules/chopin-core
+tools/scripts/build-module.sh modules/sextant-core
 REL=out/release-3.0.0
 mkdir -p "$REL"
-cp apps/pilot/dist/chopin-pilot-3.0.0.apk "$REL"/
-cp modules/chopin-core.zip "$REL"/
-cp apps/pc-cli/dist/chopin-linux-amd64 apps/pc-cli/dist/chopin-windows-amd64.exe "$REL"/
+cp apps/pilot/dist/sextant-pilot-3.0.0.apk "$REL"/
+cp modules/sextant-core.zip "$REL"/
+cp apps/pc-cli/dist/sextant-linux-amd64 apps/pc-cli/dist/sextant-windows-amd64.exe "$REL"/
 cp docs/release-key.asc "$REL"/
-( cd "$REL" && sha256sum chopin-pilot-3.0.0.apk chopin-core.zip \
-    chopin-linux-amd64 chopin-windows-amd64.exe > SHA256SUMS )
+( cd "$REL" && sha256sum sextant-pilot-3.0.0.apk sextant-core.zip \
+    sextant-linux-amd64 sextant-windows-amd64.exe > SHA256SUMS )
 GNUPGHOME="$HOME/.chopin-release/gnupg" gpg --batch --pinentry-mode loopback \
   --passphrase-file "$HOME/.chopin-release-secrets/gpg.pass" \
   --armor --detach-sign --output "$REL/SHA256SUMS.asc" "$REL/SHA256SUMS"
@@ -65,7 +67,7 @@ GNUPGHOME="$HOME/.chopin-release/gnupg" gpg --batch --pinentry-mode loopback \
 gpg --import release-key.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum -c SHA256SUMS
-apksigner verify --print-certs chopin-pilot-3.0.0.apk
+apksigner verify --print-certs sextant-pilot-3.0.0.apk
 ```
 
 证书 SHA-256 必须是 `3bd6c103…`；GPG 指纹必须是 `61D77E…`。不一致就不要安装。
@@ -74,8 +76,8 @@ apksigner verify --print-certs chopin-pilot-3.0.0.apk
 
 设备上已安装的 APK 是开发 key（`e4466d…`），发布 APK 是 `3bd6c1…`。Android 不允许签名不同的覆盖安装：
 
-- 首次换到 release APK 必须先卸载 `com.chopin.pilot`（本项目自己的包，允许），再安装 release APK 或刷入包含它的模块。
-- 卸载会丢 APK 的数据（状态页偏好等）；守护的 `/data/adb/chopin-core` 状态不受影响。
+- 首次换到 release APK 必须先卸载 `com.sextant.pilot`（本项目自己的包，允许），再安装 release APK 或刷入包含它的模块。
+- 卸载会丢 APK 的数据（状态页偏好等）；守护的 `/data/adb/sextant-core` 状态不受影响。
 - 模块 `service.sh` 只做 `pm install -r`，不会自动卸载；换 key 必须人工做一次。
 - 如果不愿意卸载，就继续使用开发 key，但那不是 release key。
 
@@ -93,4 +95,4 @@ apksigner verify --print-certs chopin-pilot-3.0.0.apk
 ## 发布状态
 
 - 本仓库只包含源码、脚本、文档与 GPG 公钥，不提交 keystore、密码或预构建发布资产。
-- 预构建 release 由维护者按上面的命令生成；上传前必须完成“旧开发 key → release key”的设备迁移演练（需要卸载一次）。
+- 预构建 release 由维护者按上面的命令生成；上传前必须完成“旧 APK → Sextant APK”的迁移演练（需要卸载一次）。

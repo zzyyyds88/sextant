@@ -35,7 +35,7 @@ function luminance(rgb) {
     const page = await ctx.newPage();
     await page.goto(BASE + '/index.html', { waitUntil: 'domcontentloaded' });
     if (await page.locator('#tokenInput').isVisible()) {
-      await page.fill('#tokenInput', process.env.CHOPIN_TOKEN || 'cpv1_preview');
+      await page.fill('#tokenInput', process.env.SEXTANT_TOKEN || 'cpv1_preview');
       await page.click('#loginBtn');
       await page.waitForTimeout(2000);
     }

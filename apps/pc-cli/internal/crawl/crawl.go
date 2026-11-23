@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"chopin/internal/appmap"
-	"chopin/internal/macro"
-	"chopin/internal/uiapi"
+	"sextant/internal/appmap"
+	"sextant/internal/macro"
+	"sextant/internal/uiapi"
 )
 
 // Options configures one crawl.

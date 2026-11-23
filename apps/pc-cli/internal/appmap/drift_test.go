@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"chopin/internal/uiapi"
+	"sextant/internal/uiapi"
 )
 
 func TestCompareDriftMatches(t *testing.T) {

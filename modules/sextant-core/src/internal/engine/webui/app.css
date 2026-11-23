@@ -1,0 +1,507 @@
+/* sextant-pilot — the device console.
+ *
+ * Two users, one screen: an agent driving the phone through the API, and the
+ * person holding it who needs to know what that agent is doing and how to stop
+ * it. The screen therefore leads with state, not decoration: the live frame and
+ * the agent's current action are the two things that must be readable in under a
+ * second, and everything else is arranged around them.
+ *
+ * Palette is the phone overlay's own — the mist neutrals, the ink, the brick-rose
+ * danger. The WebUI and the on-device pill are two views of one product, so a
+ * person who has seen one recognises the other. Light and dark are both first
+ * class: the phone gets used on a desk in daylight as often as in a dark room.
+ *
+ * Type: system UI face for text, monospace ONLY for data (durations, gauges,
+ * counts) — the places where digit alignment carries meaning.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Mist neutrals — shared with apps/pilot OverlayLook.kt */
+  --surface:        #F6F7FB;
+  --surface-1:      #FFFFFF;
+  --surface-2:      #ECEFF6;
+  --surface-3:      #E2E7F1;
+  --hairline:       rgba(11, 21, 45, .12);
+  --hairline-soft:  rgba(11, 21, 45, .07);
+
+  --ink:            #191E29;
+  --ink-2:          #454C5C;   /* 8.1:1 on --surface */
+  --ink-3:          #5F6674;   /* 5.3:1 on --surface, AA for body */
+  --ink-on-accent:  #FFFFFF;
+
+  --accent:         #3D5AA8;
+  --accent-weak:    #DEE8FF;
+  --accent-ink:     #1E2F5E;
+
+  --ok:             #2C6B45;
+  --ok-weak:        #DCF0E4;
+  --warn:           #7A5312;
+  --warn-weak:      #FBEFD5;
+  --danger:         #9C3B37;
+  --danger-weak:    #FBE5E3;
+
+  /* Measurement. 4px base; the console is dense on purpose. */
+  --u: 4px;
+  --radius: 10px;
+  --radius-lg: 14px;
+
+  --shadow-1: 0 1px 2px rgba(11, 21, 45, .06), 0 1px 1px rgba(11, 21, 45, .04);
+  --shadow-2: 0 2px 4px rgba(11, 21, 45, .06), 0 8px 24px -8px rgba(11, 21, 45, .18);
+
+  --step-0: 12px;
+  --step-1: 13px;
+  --step-2: 15px;
+  --step-3: 18px;
+  --step-4: 22px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface:        #151920;
+    --surface-1:      #1D222B;
+    --surface-2:      #262C37;
+    --surface-3:      #303744;
+    --hairline:       rgba(255, 255, 255, .14);
+    --hairline-soft:  rgba(255, 255, 255, .08);
+
+    --ink:            #E9ECF2;
+    --ink-2:          #B9C0CC;
+    --ink-3:          #9BA3B1;
+    --ink-on-accent:  #0E1729;
+
+    --accent:         #9DB4EE;
+    --accent-weak:    #2A3149;
+    --accent-ink:     #C9D7F7;
+
+    --ok:             #7FD3A0;
+    --ok-weak:        #1E3228;
+    --warn:           #E4BE76;
+    --warn-weak:      #322915;
+    --danger:         #EC9A94;
+    --danger-weak:    #38201F;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+    --shadow-2: 0 2px 6px rgba(0, 0, 0, .4), 0 10px 30px -12px rgba(0, 0, 0, .7);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  background: var(--surface);
+  color: var(--ink);
+  font: var(--step-1)/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* The parts nobody draws still belong to the design. */
+::selection { background: var(--accent-weak); color: var(--accent-ink); }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background-clip: content-box;
+}
+
+button, select, textarea, input { font: inherit; color: inherit; }
+
+/* ---- controls ------------------------------------------------------------- */
+
+button {
+  appearance: none;
+  border: 1px solid var(--hairline);
+  background: var(--surface-1);
+  color: var(--ink);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3.5);
+  min-height: 36px;
+  font-size: var(--step-1);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--shadow-1);
+  transition: background-color .12s ease, border-color .12s ease,
+              box-shadow .12s ease, transform .06s ease;
+}
+button:hover:not(:disabled) { background: var(--surface-2); border-color: var(--hairline); }
+button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+button:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; }
+
+button.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--ink-on-accent);
+}
+button.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+
+button.ghost { background: transparent; box-shadow: none; border-color: var(--hairline); }
+button.ghost:hover:not(:disabled) { background: var(--surface-2); }
+
+button.danger { color: var(--danger); border-color: var(--hairline); background: var(--surface-1); }
+button.danger:hover:not(:disabled) { background: var(--danger-weak); }
+
+button.small { min-height: 30px; padding: 4px 10px; font-size: var(--step-0); }
+/* The banner's own retry: it is the recovery action for the one message on the
+   page that must not be missed, so it keeps a full-size target. */
+.banner button.small { min-height: 36px; }
+
+textarea, select, input[type="text"] {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  color: var(--ink);
+  outline: none;
+  resize: vertical;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+textarea::placeholder, input::placeholder { color: var(--ink-3); }
+textarea:focus, select:focus, input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+select { cursor: pointer; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+[hidden] { display: none !important; }
+
+.mono {
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- sign in -------------------------------------------------------------- */
+
+.login-view {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 6);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--surface-2), transparent 70%),
+    var(--surface);
+}
+.login-card {
+  width: min(460px, 100%);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  padding: calc(var(--u) * 7);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 3);
+  box-shadow: var(--shadow-2);
+}
+.login-card h1 {
+  margin: 0;
+  font-size: var(--step-4);
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+.login-card .muted { margin: 0; max-width: 60ch; }
+.token-input { min-height: 92px; word-break: break-all; font-size: var(--step-0); }
+.error { color: var(--danger); min-height: 20px; margin: 0; font-size: var(--step-1); }
+.hint { color: var(--ink-3); min-height: 18px; margin: 0; font-size: var(--step-0); }
+.muted { color: var(--ink-2); }
+
+/* ---- shell ---------------------------------------------------------------- */
+
+.app-view {
+  min-height: 100dvh;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: calc(var(--u) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 3);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  flex-wrap: wrap;
+  padding: calc(var(--u) * 1) calc(var(--u) * 1);
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--u);
+  font-size: var(--step-2);
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+.version {
+  color: var(--ink-3);
+  font-size: var(--step-0);
+  font-weight: 450;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.spacer { flex: 1; }
+
+/* The status rail: five readings, one glance. Each cell is a label and a value;
+ * the value carries the state colour, so a scanning eye lands on the odd one out
+ * instead of reading every cell. */
+.rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 1px;
+  background: var(--hairline-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cell {
+  background: var(--surface-1);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cell .k {
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell .v {
+  font-size: var(--step-1);
+  font-weight: 560;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell .v.ok { color: var(--ok); }
+.cell .v.warn { color: var(--warn); }
+.cell .v.bad { color: var(--danger); }
+.cell .v.idle { color: var(--ink-3); }
+
+/* The badge is a state, so it wears the state colour and nothing else. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: 99px;
+  padding: 4px 11px 4px 9px;
+  font-size: var(--step-0);
+  font-weight: 560;
+  color: var(--ink-2);
+  background: var(--surface-1);
+  white-space: nowrap;
+}
+.badge::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 99px;
+  background: currentColor;
+  opacity: .55;
+  flex: none;
+}
+.badge.active { color: var(--ok); background: var(--ok-weak); border-color: transparent; }
+.badge.active::before { opacity: 1; }
+.badge.readonly { color: var(--warn); background: var(--warn-weak); border-color: transparent; }
+.badge.readonly::before { opacity: 1; }
+.badge.free { color: var(--ink-2); }
+.badge.free::before { opacity: .4; }
+
+/* ---- banner --------------------------------------------------------------- */
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  justify-content: space-between;
+  background: var(--warn-weak);
+  border: 1px solid transparent;
+  color: var(--warn);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  font-size: var(--step-1);
+}
+.banner .ghost { color: inherit; border-color: currentColor; background: transparent; }
+
+/* ---- stage ---------------------------------------------------------------- */
+
+.stage-wrap { display: flex; flex-direction: column; gap: calc(var(--u) * 2); }
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 46vh;
+  max-height: 68vh;
+  background: #07090D;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: var(--shadow-2);
+}
+.stage video, .stage img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.stage img { pointer-events: none; }
+.stage.active { cursor: crosshair; }
+.stage.active { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.stage-hint {
+  position: absolute;
+  inset: auto 12px 12px 12px;
+  text-align: center;
+  color: rgba(255, 255, 255, .82);
+  font-size: var(--step-0);
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
+
+/* The activity line: what the agent is doing RIGHT NOW, the same sentence the
+ * phone's own overlay shows. It sits under the frame because it explains the
+ * frame. A bare 「控制中」 told the person nothing they could act on. */
+.activity {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  min-height: 44px;
+}
+.activity .dot {
+  width: 8px; height: 8px;
+  border-radius: 99px;
+  flex: none;
+  background: var(--ink-3);
+}
+.activity.live .dot { background: var(--ok); }
+.activity.paused .dot { background: var(--warn); }
+.activity.stopped .dot { background: var(--danger); }
+.activity .what {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--step-2);
+  font-weight: 520;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activity .meta {
+  font-size: var(--step-0);
+  color: var(--ink-3);
+  white-space: nowrap;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---- session -------------------------------------------------------------- */
+
+.sessionbar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  flex-wrap: wrap;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+}
+.session-info { color: var(--ink-2); font-size: var(--step-1); flex: 1; min-width: 180px; }
+.session-actions { display: flex; gap: calc(var(--u) * 2); }
+
+/* ---- access --------------------------------------------------------------- */
+
+/* The address someone types on another machine. It is a fact about the running
+   daemon, not a decoration, so it is set in the data face and made copyable. */
+.access {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 1.5) calc(var(--u) * 3);
+}
+.access-main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: calc(var(--u) * 2); }
+.access-main .k {
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.access-main code {
+  font-size: var(--step-1);
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+.access-side { flex: none; }
+
+/* ---- input ---------------------------------------------------------------- */
+
+.inputbar {
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 3);
+}
+.keyrow { display: flex; gap: calc(var(--u) * 2); flex-wrap: wrap; }
+.key { min-width: 64px; }
+.textrow { display: flex; gap: calc(var(--u) * 2); align-items: stretch; }
+.textrow textarea { flex: 1; min-height: 56px; max-height: 148px; }
+.text-actions { display: flex; flex-direction: column; gap: calc(var(--u) * 1.5); }
+.text-actions button { flex: 1; }
+
+/* ---- responsive ----------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .app-view { padding: calc(var(--u) * 2); gap: calc(var(--u) * 2); }
+  .stage { min-height: 40vh; max-height: 56vh; }
+  /* Five readings, two rows: still one glance, half the height. */
+  .rail { grid-template-columns: repeat(3, 1fr); }
+  .cell { padding: calc(var(--u) * 1.5) calc(var(--u) * 2); }
+  .cell .k { font-size: 10px; }
+  .cell .v { font-size: var(--step-0); }
+  .textrow { flex-direction: column; }
+  .text-actions { flex-direction: row; }
+  .activity .what { font-size: var(--step-1); }
+  .brand { font-size: var(--step-1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}

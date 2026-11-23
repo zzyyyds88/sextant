@@ -10,11 +10,11 @@
 #   settings.sh list
 #   settings.sh set <name> <value>
 #
-# Requires the CLI at apps/pc-cli/dist/chopin-linux-amd64 and a reachable device.
+# Requires the CLI at apps/pc-cli/dist/sextant-linux-amd64 and a reachable device.
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-CLI=${CLI:-$ROOT/apps/pc-cli/dist/chopin-linux-amd64}
-export CHOPIN_ADB_HOME=${CHOPIN_ADB_HOME:-$ROOT/adbhome}
+CLI=${CLI:-$ROOT/apps/pc-cli/dist/sextant-linux-amd64}
+export SEXTANT_ADB_HOME=${SEXTANT_ADB_HOME:-$ROOT/adbhome}
 
 case "${1:-list}" in
     list|ls)

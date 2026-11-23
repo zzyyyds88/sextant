@@ -20,8 +20,8 @@ import (
 	"strings"
 	"unicode"
 
-	"chopin/internal/uiapi"
-	"chopin/third_party/yaml"
+	"sextant/internal/uiapi"
+	"sextant/third_party/yaml"
 )
 
 // MinCoverage is the smallest share of a screen's anchors a dump must contain
@@ -158,7 +158,7 @@ func DefaultDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".chopin", "maps"), nil
+	return filepath.Join(home, ".sextant", "maps"), nil
 }
 
 // Save writes the map atomically (tmp + rename) with 0600.

@@ -8,9 +8,9 @@
 set -uo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-MOD="$ROOT/modules/chopin-core"
+MOD="$ROOT/modules/sextant-core"
 CFG="$MOD/config/core.json"
-APKSRC="$ROOT/apps/pilot/app/src/com/chopin/pilot"
+APKSRC="$ROOT/apps/pilot/app/src/com/sextant/pilot"
 APKROOT="$ROOT/apps/pilot/app"
 CLI="$ROOT/apps/pc-cli"
 STATUSGO="$MOD/src/internal/status/status.go"
@@ -22,33 +22,33 @@ require() { if grep -qF -- "$2" "$3" 2>/dev/null; then ok "$1"; else bad "$1" "n
 require_absent() { if grep -qF -- "$2" "$3" 2>/dev/null; then bad "$1" "must not appear in ${3#$ROOT/}: $2"; else ok "$1"; fi; }
 
 echo "== package identity =="
-require "config names the app package" '"package": "com.chopin.pilot"' "$CFG"
-require "APK EnginePaths names the same package" 'PKG = "com.chopin.pilot"' "$APKSRC/EnginePaths.java"
+require "config names the app package" '"package": "com.sextant.pilot"' "$CFG"
+require "APK EnginePaths names the same package" 'PKG = "com.sextant.pilot"' "$APKSRC/EnginePaths.java"
 # The CLI does not need the package name; what it must share is the daemon port.
-require "CLI targets the daemon port 8443" '8443' "$CLI/cmd/chopin/main.go"
+require "CLI targets the daemon port 8443" '8443' "$CLI/cmd/sextant/main.go"
 
 echo "== accessibility component =="
-require "config declares the a11y component" 'com.chopin.pilot/.hud.RemoteA11yService' "$CFG"
+require "config declares the a11y component" 'com.sextant.pilot/.hud.RemoteA11yService' "$CFG"
 require "config declares the a11y compat service" 'com.google.android.accessibility.selecttospeak.SelectToSpeakService' "$CFG"
 require "APK class exists" 'class RemoteA11yService' "$APKSRC/hud/RemoteA11yService.kt"
-require "CLI ships the user-like acceptance matrix" 'journey' "$ROOT/apps/pc-cli/cmd/chopin/commands.go"
-require "the journey matrix reads the audit log over the API" 'files/download' "$ROOT/apps/pc-cli/cmd/chopin/journey.go"
-require_absent "no old module path in a11y layer" '/data/adb/chopin-remote' "$MOD/src/internal/a11y/a11y.go"
+require "CLI ships the user-like acceptance matrix" 'journey' "$ROOT/apps/pc-cli/cmd/sextant/commands.go"
+require "the journey matrix reads the audit log over the API" 'files/download' "$ROOT/apps/pc-cli/cmd/sextant/journey.go"
+require_absent "no old module path in a11y layer" '/data/adb/sextant-remote' "$MOD/src/internal/a11y/a11y.go"
 
 echo "== IME: service, provider authority and package are three different strings =="
-require "config has ime_service"   '"ime_service": "com.chopin.pilot/.ime.RemoteImeService"' "$CFG"
-require "config has ime_provider"  '"ime_provider": "com.chopin.pilot.ime"' "$CFG"
-require "APK manifest declares the provider authority" 'com.chopin.pilot.ime' "$ROOT/apps/pilot/app/AndroidManifest.xml"
+require "config has ime_service"   '"ime_service": "com.sextant.pilot/.ime.RemoteImeService"' "$CFG"
+require "config has ime_provider"  '"ime_provider": "com.sextant.pilot.ime"' "$CFG"
+require "APK manifest declares the provider authority" 'com.sextant.pilot.ime' "$ROOT/apps/pilot/app/AndroidManifest.xml"
 require "daemon rejects equal service/provider" 'ime_service must not equal app.ime_provider' "$MOD/src/internal/config/config.go"
 
 echo "== runtime paths (one tree) =="
-require "config data_dir"  '"data_dir": "/data/adb/chopin-core"' "$CFG"
-require "APK reads from its own private dir" 'APP_DIR = "/data/user/0/com.chopin.pilot/files"' "$APKSRC/EnginePaths.java"
+require "config data_dir"  '"data_dir": "/data/adb/sextant-core"' "$CFG"
+require "APK reads from its own private dir" 'APP_DIR = "/data/user/0/com.sextant.pilot/files"' "$APKSRC/EnginePaths.java"
 require "APK status file is <app dir>/status.json" 'STATUS = APP_DIR + "/status.json"' "$APKSRC/EnginePaths.java"
-require "APK calls the module CLI" '"/data/adb/ksu/bin/chopin-core"' "$APKSRC/EnginePaths.java"
-require_absent "daemon never uses the old tree" '/data/adb/chopin-remote' "$MOD/src/internal/engine/engine.go"
-require_absent "no old harness tree in a11y" '/data/adb/chopin-harness' "$MOD/src/internal/a11y/a11y.go"
-require_absent "daemon never uses the old harness tree" '/data/adb/chopin-harness' "$MOD/src/internal/engine/engine.go"
+require "APK calls the module CLI" '"/data/adb/ksu/bin/sextant-core"' "$APKSRC/EnginePaths.java"
+require_absent "daemon never uses the old tree" '/data/adb/sextant-remote' "$MOD/src/internal/engine/engine.go"
+require_absent "no old harness tree in a11y" '/data/adb/sextant-harness' "$MOD/src/internal/a11y/a11y.go"
+require_absent "daemon never uses the old harness tree" '/data/adb/sextant-harness' "$MOD/src/internal/engine/engine.go"
 
 echo "== status schema keys (daemon <-> APK <-> CLI) =="
 for key in '"schema"' '"updated_at"' '"daemon"' '"app"' '"unlock"' '"sessions"' '"errors"'; do
@@ -57,10 +57,10 @@ done
 for key in 'SCHEMA = 1' 'status.json' 'unlockCredential' 'daemonRunning'; do
     require "APK PilotStatus uses $key" "$key" "$APKSRC/PilotStatus.java"
 done
-require "CLI parses the status object" '/v1/status' "$CLI/cmd/chopin/main.go"
+require "CLI parses the status object" '/v1/status' "$CLI/cmd/sextant/main.go"
 
 echo "== the removed layer must stay removed =="
-require_absent "no chopin-harnessctl"      'chopin-harnessctl' "$MOD/service.sh"
+require_absent "no sextant-harnessctl"      'sextant-harnessctl' "$MOD/service.sh"
 require_absent "no allowlist tool"         'allowlist-tool'    "$MOD/service.sh"
 require_absent "no watch worker"           'watch_worker'      "$MOD/service.sh"
 require_absent "no targets.tsv manifest"   'targets.tsv'       "$MOD/service.sh"
@@ -100,7 +100,7 @@ for path in /doc /v1/status /v1/device /v1/device/lock-state /v1/device/unlock-l
 done
 
 echo "== CLI covers the D29 primitives =="
-CLI_DIR="$ROOT/apps/pc-cli/cmd/chopin"
+CLI_DIR="$ROOT/apps/pc-cli/cmd/sextant"
 # A route with no CLI caller is the exact gap that let wait/chain sit unused for
 # a whole release. These are the primitives an agent is expected to drive.
 for path in /v1/ui/act /v1/ui/list /v1/ui/options /v1/ui/readback /v1/ui/page \
@@ -111,7 +111,7 @@ for path in /v1/ui/act /v1/ui/list /v1/ui/options /v1/ui/readback /v1/ui/page \
     if grep -Rqs -- "\"$path\"" "$CLI_DIR"; then
         ok "CLI calls $path"
     else
-        bad "CLI calls $path" "not found under apps/pc-cli/cmd/chopin"
+        bad "CLI calls $path" "not found under apps/pc-cli/cmd/sextant"
     fi
 done
 # The daemon's injection bodies name the field `display`; a CLI that sends
@@ -132,12 +132,12 @@ echo "== every scope a route demands can be granted =="
 ROUTES_ALL="$MOD/src/internal/engine/routes.go"
 for f in "$MOD"/src/internal/engine/routes*.go; do
     grep -ho 'auth.Require(\[\]string{[^}]*}' "$f" 2>/dev/null
-done | grep -o '"[a-z]*"' | tr -d '"' | sort -u > /tmp/chopin-route-scopes.txt
+done | grep -o '"[a-z]*"' | tr -d '"' | sort -u > /tmp/sextant-route-scopes.txt
 SCOPEGO="$MOD/src/internal/token/token.go"
 while read -r sc; do
     [ -z "$sc" ] && continue
     require "scope \"$sc\" is issuable" "\"$sc\": true" "$SCOPEGO"
-done < /tmp/chopin-route-scopes.txt
+done < /tmp/sextant-route-scopes.txt
 # And the default PC token must carry the ones the CLI advertises.
 require "the default scope list includes device" '"device",' "$SCOPEGO"
 
@@ -204,21 +204,21 @@ require "UiKit keeps body text at 14sp or larger" "setTextSize(14)" "$UK"
 echo "== the audio bridge stays reachable =="
 # Every audio method the daemon calls must exist in the helper's dispatch table.
 # A missing one is not a compile error anywhere — it is a 503 at request time.
-AB="$MOD/helper/src/com/chopin/core/helper/AndroidBridge.java"
+AB="$MOD/helper/src/com/sextant/core/helper/AndroidBridge.java"
 for m in audio_state audio_mic_mute audio_speakerphone audio_mode audio_listen audio_speak; do
     require "the helper dispatches $m" "\"$m\".equals(method)" "$AB"
 done
 require "the audio bridge reports silence, not just success" \
-    '"silent", rms < 8' "$MOD/helper/src/com/chopin/core/helper/AudioBridge.java"
+    '"silent", rms < 8' "$MOD/helper/src/com/sextant/core/helper/AudioBridge.java"
 # Playback still has to say where its track really went: AudioAttributes describe
 # what was asked for, and the policy is free to route it elsewhere.
-ABRIDGE="$MOD/helper/src/com/chopin/core/helper/AudioBridge.java"
+ABRIDGE="$MOD/helper/src/com/sextant/core/helper/AudioBridge.java"
 require "the helper reports where the track really went" 'routedDeviceName' "$ABRIDGE"
 
 echo "== the helper keeps the accessibility flag =="
 # Losing this flag silently unbinds every third-party accessibility service while
 # settings still look correct (DESIGN §10.1 #6), so it is asserted here too.
-HELPER="$MOD/helper/src/com/chopin/core/helper/AndroidBridge.java"
+HELPER="$MOD/helper/src/com/sextant/core/helper/AndroidBridge.java"
 require "helper sets FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES" \
     'FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES' "$HELPER"
 require "daemon ships the helper jar" 'lib/helper.jar' "$MOD/customize.sh"

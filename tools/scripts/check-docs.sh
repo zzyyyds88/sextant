@@ -16,14 +16,14 @@ dir_absent() { if [ -e "$ROOT/$1" ]; then bad "$2" "must not exist: $1"; else ok
 
 echo "== the current sources of truth exist =="
 for f in docs/DESIGN.md docs/TASKS.md docs/ACCEPTANCE.md README.md AGENTS.md \
-         modules/chopin-core/README.md apps/pilot/README.md apps/pc-cli/README.md; do
+         modules/sextant-core/README.md apps/pilot/README.md apps/pc-cli/README.md; do
     if [ -f "$ROOT/$f" ]; then ok "$f"; else bad "$f is missing"; fi
 done
 
 echo "== the workspace is remote-control only =="
-dir_absent "modules/chopin-compat" "the old compat module is gone"
+dir_absent "modules/sextant-compat" "the old compat module is gone"
 dir_absent "modules/miui14-agent-tune" "the old tune module is gone"
-dir_absent "modules/chopin-harness" "the old harness module directory is gone"
+dir_absent "modules/sextant-harness" "the old harness module directory is gone"
 dir_absent "apps/remote" "the old remote app directory is gone"
 dir_absent "docs/archive" "the old design archive is gone"
 dir_absent "decompiled" "decompiled trees are external"
@@ -40,7 +40,7 @@ echo "== the acceptance process states its own rules =="
 file_has "$ROOT/docs/ACCEPTANCE.md" '不许把跳过算通过' 'ACCEPTANCE forbids counting SKIP as a pass'
 file_has "$ROOT/docs/ACCEPTANCE.md" '用另一条通道复核' 'ACCEPTANCE requires an independent channel'
 file_has "$ROOT/docs/ACCEPTANCE.md" '读审计日志' 'ACCEPTANCE requires log confirmation'
-file_has "$ROOT/docs/ACCEPTANCE.md" 'chopin journey' 'ACCEPTANCE documents the user-like matrix'
+file_has "$ROOT/docs/ACCEPTANCE.md" 'sextant journey' 'ACCEPTANCE documents the user-like matrix'
 file_has "$ROOT/docs/ACCEPTANCE.md" '已知未覆盖' 'ACCEPTANCE admits what is not covered'
 
 echo "== DESIGN carries the current decision set =="
@@ -52,19 +52,19 @@ file_has "$ROOT/docs/DESIGN.md" '只负责远控' 'DESIGN states the remote-cont
 file_has "$ROOT/docs/DESIGN.md" '/root/chopin-research/' 'DESIGN points at the external research root'
 
 echo "== AGENTS agrees with the current architecture =="
-file_lacks "$ROOT/AGENTS.md" 'chopin-harnessctl' 'AGENTS has no old dead CLI name'
-file_lacks "$ROOT/AGENTS.md" 'chopin-corectl' 'AGENTS has no new dead CLI name'
+file_lacks "$ROOT/AGENTS.md" 'sextant-harnessctl' 'AGENTS has no old dead CLI name'
+file_lacks "$ROOT/AGENTS.md" 'sextant-corectl' 'AGENTS has no new dead CLI name'
 file_lacks "$ROOT/AGENTS.md" 'docs/HARNESS-SPEC.md' 'AGENTS has no dead spec path'
 file_has "$ROOT/AGENTS.md" '只负责远控' 'AGENTS states the remote-control-only scope'
 file_has "$ROOT/AGENTS.md" '≤ 60' 'AGENTS states the static-gate budget'
 
 echo "== documented ctl subcommands exist =="
-CTL_DOC="$ROOT/modules/chopin-core/README.md"
-CTL_SRC="$ROOT/modules/chopin-core/src/internal/ctl/ctl.go"
+CTL_DOC="$ROOT/modules/sextant-core/README.md"
+CTL_SRC="$ROOT/modules/sextant-core/src/internal/ctl/ctl.go"
 for sub in version status "pair new" "token list" "token revoke" "token rotate" \
            "secret set-unlock" "secret clear-unlock" "secret set-sim" "secret clear-sim" \
            "secret status" "animation off" "animation restore" "animation status" log; do
-    file_has "$CTL_DOC" "chopin-core ctl $sub" "ctl $sub is documented"
+    file_has "$CTL_DOC" "sextant-core ctl $sub" "ctl $sub is documented"
 done
 file_has "$CTL_SRC" "secret set-unlock" "ctl usage lists the same subcommands"
 file_has "$CTL_SRC" "secret set-sim" "ctl usage lists set-sim"

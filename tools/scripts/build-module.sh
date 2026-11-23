@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a KernelSU/Magisk module zip from a module source directory.
-# Usage: build-module.sh modules/chopin-core [output.zip]
+# Usage: build-module.sh modules/sextant-core [output.zip]
 set -euo pipefail
 
 SRC=${1:?usage: $0 <module-dir> [output.zip]}
@@ -10,7 +10,7 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 NAME=$(sed -n 's/^id=//p' "$SRC/module.prop" | head -1)
 # D26: the unlock pattern is a local build input, never tracked. Failing here is
 # deliberate: a module zip without it installs a device that cannot auto-unlock.
-if [ "$NAME" = "chopin-core" ] && [ ! -s "$SRC/config/unlock-secret" ]; then
+if [ "$NAME" = "sextant-core" ] && [ ! -s "$SRC/config/unlock-secret" ]; then
     echo "error: $SRC/config/unlock-secret is missing or empty" >&2
     echo "       it is a local build input (0600) and intentionally not tracked" >&2
     exit 2
@@ -47,12 +47,23 @@ if [ -f "$TMP/lib/app.apk" ]; then
                     echo "refreshed $(realpath --relative-to="$TMP" "$target")"
                 fi
             done < <(find "$TMP/system/priv-app" -name '*.apk' -type f)
+            if [ "$found" = 0 ] && [ -f "$TMP/lib/app.apk" ]; then
+                appdir=$(find "$TMP/system/priv-app" -mindepth 1 -maxdepth 1 -type d | head -1)
+                if [ -n "$appdir" ]; then
+                    appname=$(basename "$appdir")
+                    target="$appdir/$appname.apk"
+                    cp -f "$TMP/lib/app.apk" "$target"
+                    found=1
+                    echo "created $(realpath --relative-to="$TMP" "$target")"
+                fi
+            fi
             [ "$found" = 1 ] || echo "WARN: system/priv-app exists but ships no APK"
         fi
     fi
 fi
 # Runtime dirs, VCS state and host-side sources never belong in a flashable zip.
 rm -rf "$TMP/state" "$TMP/log" "$TMP/.git" "$TMP/src" 2>/dev/null || true
+find "$TMP" -name .gitkeep -delete 2>/dev/null || true
 # Honour an optional .moduleignore (one glob-ish path per line).
 if [ -f "$SRC/.moduleignore" ]; then
     while IFS= read -r pat; do

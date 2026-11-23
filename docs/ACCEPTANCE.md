@@ -1,7 +1,7 @@
 # 验收流程
 
 这份文档规定的不是"跑一遍接口看看有没有报错"，而是**怎样才算这个能力真的能用**。
-`chopin acceptance` 和 `chopin journey` 都按这里写的规则判定；两者不能自相矛盾。
+`sextant acceptance` 和 `sextant journey` 都按这里写的规则判定；两者不能自相矛盾。
 
 ## 0. 为什么要有这份文档
 
@@ -46,18 +46,18 @@
 
 ## 3. 两层验收
 
-### 3.1 能力矩阵 `chopin acceptance`
+### 3.1 能力矩阵 `sextant acceptance`
 
 回答"每个端点在真机上能不能应答、返回的东西是否自洽"。41 项，覆盖感知、输入、会话、
 系统、显示、WebRTC、触发器、锁、通知流等。能力被 ROM 限制或缺真机样本时如实 SKIP
 （例如验证页分类），SKIP 不计入 PASS。
 
-### 3.2 使用流程 `chopin journey`
+### 3.2 使用流程 `sextant journey`
 
 回答"一个用户能不能真的用它把事做完"。21 步，每步都按第 1 节的三条规则判定。
 
 ```bash
-chopin journey --out out/journey-$(date +%Y%m%d-%H%M%S)
+sextant journey --out out/journey-$(date +%Y%m%d-%H%M%S)
 ```
 
 它做的事，按场景：
@@ -93,7 +93,7 @@ chopin journey --out out/journey-$(date +%Y%m%d-%H%M%S)
 日志通过**公开 API**读，不走 adb——验收对象是被测系统本身，读日志的通道不能是特权后门：
 
 ```bash
-chopin get /data/adb/chopin-core/log/core.log --out /tmp/h.log
+sextant get /data/adb/sextant-core/log/core.log --out /tmp/h.log
 ```
 
 `journey` 内部就是这么做的：步骤开始前记下当前行数，步骤结束后只取新增行，
@@ -106,9 +106,9 @@ chopin get /data/adb/chopin-core/log/core.log --out /tmp/h.log
 
 自动化覆盖不到的，发版前人工过一遍（每项都要给出实际观察，不接受"应该没问题"）：
 
-- [ ] 拔掉 adb 后守护仍在跑：`chopin health` 从另一台机器可用。
-- [ ] 重启一次手机，等 boot 完成后 `chopin status` 显示 `a11y OK` + `compat` 已绑定 + `bg_ok true`。
-- [ ] 微信冷启动后 `chopin tree` 能读到会话列表（不是 1 个节点）。
+- [ ] 拔掉 adb 后守护仍在跑：`sextant health` 从另一台机器可用。
+- [ ] 重启一次手机，等 boot 完成后 `sextant status` 显示 `a11y OK` + `compat` 已绑定 + `bg_ok true`。
+- [ ] 微信冷启动后 `sextant tree` 能读到会话列表（不是 1 个节点）。
 - [ ] 用 CLI 给一个真实联系人发一条消息，肉眼确认对方会话里出现。
 - [ ] 打字结束后，手机上自己的键盘能正常弹出（不是我们的隐形输入法）。
 - [ ] HUD 悬浮条在受控期间显示、暂停/停止可用，停止后所有会话被释放。

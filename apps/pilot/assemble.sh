@@ -85,13 +85,14 @@ fi
 # auto-generate anything, and pass the password through the environment rather
 # than argv (argv is visible in `ps`). See docs/RELEASE.md.
 DEFAULT_KEYDIR="$ROOT/apps/pilot/build/keystore"
-KEYSTORE=${CHOPIN_KEYSTORE:-"$DEFAULT_KEYDIR/keystore.jks"}
-PASSFILE=${CHOPIN_KEYSTORE_PASS_FILE:-"$DEFAULT_KEYDIR/keystore.pass"}
-RELEASE=${CHOPIN_RELEASE:-0}
+KEYSTORE=${SEXTANT_KEYSTORE:-"$DEFAULT_KEYDIR/keystore.jks"}
+PASSFILE=${SEXTANT_KEYSTORE_PASS_FILE:-"$DEFAULT_KEYDIR/keystore.pass"}
+RELEASE=${SEXTANT_RELEASE:-0}
+ALIAS=${SEXTANT_KEY_ALIAS:-}
 
 if [ "$RELEASE" = "1" ]; then
-  [ -n "${CHOPIN_KEYSTORE:-}" ] || { echo "release build needs CHOPIN_KEYSTORE" >&2; exit 1; }
-  [ -n "${CHOPIN_KEYSTORE_PASS_FILE:-}" ] || { echo "release build needs CHOPIN_KEYSTORE_PASS_FILE" >&2; exit 1; }
+  [ -n "${SEXTANT_KEYSTORE:-}" ] || { echo "release build needs SEXTANT_KEYSTORE" >&2; exit 1; }
+  [ -n "${SEXTANT_KEYSTORE_PASS_FILE:-}" ] || { echo "release build needs SEXTANT_KEYSTORE_PASS_FILE" >&2; exit 1; }
   [ -f "$KEYSTORE" ] || { echo "release keystore not found: $KEYSTORE" >&2; exit 1; }
 fi
 
@@ -106,15 +107,22 @@ if [ ! -f "$KEYSTORE" ]; then
   printf '\n' >> "$PASSFILE"
   PASS=$(head -n1 "$PASSFILE")
   keytool -genkeypair -keystore "$KEYSTORE" \
-    -storepass "$PASS" -keypass "$PASS" -alias "$PKG" \
+    -storepass "$PASS" -keypass "$PASS" -alias "$ALIAS" \
     -keyalg RSA -keysize 2048 -validity 36500 \
-    -dname "CN=$PKG, OU=chopin-ksu, O=chopin-ksu, C=CN" 2>/dev/null
+    -dname "CN=$PKG, OU=sextant, O=sextant, C=CN" 2>/dev/null
 fi
 [ -f "$PASSFILE" ] || { echo "keystore password file not found: $PASSFILE" >&2; exit 1; }
 PASS=$(head -n1 "$PASSFILE")
+# Existing project keystores predate the Sextant package rename and keep their
+# original alias. Reuse the single PrivateKeyEntry unless the caller overrides it.
+if [ -z "$ALIAS" ] && command -v keytool >/dev/null 2>&1; then
+  ALIAS=$(keytool -list -keystore "$KEYSTORE" -storepass:file "$PASSFILE" 2>/dev/null \
+    | awk -F, '/PrivateKeyEntry/{gsub(/^ +| +$/, "", $1); print $1; exit}')
+fi
+ALIAS=${ALIAS:-$PKG}
 mkdir -p "$(dirname "$OUT")"
-CHOPIN_KS_PASS="$PASS" "$APKSIGNER" sign --ks "$KEYSTORE" \
-  --ks-pass env:CHOPIN_KS_PASS --key-pass env:CHOPIN_KS_PASS \
-  --ks-key-alias "$PKG" --out "$OUT" "$WORK/unsigned/aligned.apk"
+SEXTANT_KS_PASS="$PASS" "$APKSIGNER" sign --ks "$KEYSTORE" \
+  --ks-pass env:SEXTANT_KS_PASS --key-pass env:SEXTANT_KS_PASS \
+  --ks-key-alias "$ALIAS" --out "$OUT" "$WORK/unsigned/aligned.apk"
 "$APKSIGNER" verify "$OUT" >/dev/null
 echo "signed: $OUT"

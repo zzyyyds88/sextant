@@ -1,16 +1,16 @@
 # Sextant 任务板（TASKS）
 
-> 状态：**远控主线已收敛，3.0 改名为 Core/Pilot**（2026-11-18）
-> 设计真源：`docs/DESIGN.md`（D6–D37）
+> 状态：**远控主线已收敛，3.0 后展示名改为 Sextant**（2026-11-23）
+> 设计真源：`docs/DESIGN.md`（D6–D38）
 > 工作主机：本机 `/root/chopin-ksu`；外部研究资料 `/root/chopin-research/`
 > 设备：`adb -s <adb-serial>`（<device-model> / MIUI V14 / Android 13 / KernelSU 3.1.8）
-> 名称说明：2026-11-18 3.0 之前的记录使用旧名 `chopin-harness` / `chopin-remote` / `com.chopin.remote`；当前为 `chopin-core` / `chopin-pilot` / `com.chopin.pilot`。
-> 项目展示名：**Sextant**；技术标识仍为 `chopin-core` / `chopin` / `com.chopin.pilot`。
+> 名称说明：2026-11-18 3.0 之前的记录使用旧名 `chopin-harness` / `chopin-remote` / `com.chopin.remote`；3.0 使用 `chopin-core` / `chopin-pilot` / `com.chopin.pilot`；D38 后当前为 `sextant-core` / `Sextant Pilot` / `com.sextant.pilot`。
+> 项目名：**Sextant**；D38 全量技术改名（CLI `sextant`、模块 `sextant-core`、APK `com.sextant.pilot`）；本表历史记录保留旧名。
 
 ## 0. 当前结论
 
-- 工作区只保留远控主线：`modules/chopin-core`、`apps/pilot`、`apps/pc-cli`。
-- 3.0 改名：模块 id/显示名 `chopin-core` / `Chopin Core`，软件包名/显示名 `com.chopin.pilot` / `Chopin Pilot`；CLI 仍为 `chopin`。
+- 工作区只保留远控主线：`modules/sextant-core`、`apps/pilot`、`apps/pc-cli`。
+- D38 改名：模块 id/显示名 `sextant-core` / `Sextant Core`，软件包名/显示名 `com.sextant.pilot` / `Sextant Pilot`，CLI 为 `sextant`；旧 `chopin-*` 身份迁移后删除。
 - `chopin-compat`、`miui14-agent-tune` 已移出工作区，并已从设备卸载；远控守护不依赖它们。
 - ROM、反编译、移植、旧构建、外部参考项目已迁到 `/root/chopin-research/`，不纳入 Git，不作为设计真源。
 - 旧设计归档已删除（历史由 Git 记录）。
@@ -53,6 +53,7 @@
 | S20 | D29 P2 / D33：增量树 diff、内存 metrics、页面指纹/版本与地图/配方漂移 | `DONE` | `diff` 同页 0 变化、切屏 added 49/removed 169、过期 404；`metrics` 计数增长且 <2KB；地图漂移正反例；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0 |
 | S21 | D30 拟人操作与验证码分流：种子化落点/间隔/限速、challenge 分类与滑块自解、risk/cooldown、handover | `DONE`（检测分流部分 SKIP 说明见债务） | 同 seed 两次 tap 落点一致；10 次 tap interval 702–1482ms（区间 700–1600）、dispatch 36–62ms；handover 后注入 409、return 后恢复；设置页 challenge=none；滑块/短信验证码页无真机样本，分类与分流以单测覆盖（22 项新增） |
 | S23 | D32 agent 引导入口：`/doc` 的 `x-chopin-guidance`（install/use）与 SKILL.md「从零安装」 | `DONE` | `GET /doc` 返回 10 步、两阶段；`/doc/skill` 含「从零安装」；init 命令只经 stdin；单测锁定字段与阶段 |
+| S27 | D38 Sextant 全量技术改名：CLI/模块/APK/状态目录/请求头/环境变量 + 迁移脚本 | `DOING` | 静态门禁 28/0；已构建 `sextant-core.zip`、`sextant-pilot` APK、`sextant` CLI；待真机迁移演练 |
 | S26 | D37 会话活动信号与僵尸回收：业务请求续期、`zombie_sec` 300s、CLI 本地会话 + heartbeat | `DONE` | 真机：只心跳不操作 6s 被回收并锁屏；持续 page 6s 不被回收；release 锁屏；CLI 后续命令自动带 session；acceptance 41/0/0、journey 21/0（首次 map 抽样失败重跑通过） |
 | S25 | D36 任务收尾与屏幕联动：`finishTask`、`stale_sec` 180s | `DONE` | 正常 release 后 `task finished (release); screen locked` 且 screen OFF/keyguard true；短 stale 配置下异常回收并锁屏；HUD stop 也收尾锁屏；acceptance 41/0/0、journey 21/0 |
 | S24 | D35 会话后台回收：`session.reap_sec` 后台 reaper | `DONE` | 真机 idle_sec=3/reap_sec=1：claim 后 8s 会话消失，审计 `session: reaped 1 expired session(s)`；单测周期/取消/0 禁用；acceptance 41/0/0、journey 21/0 |
@@ -84,9 +85,9 @@
 | 2026-11-18 11:04 | **D29 P1：上下文裁剪 + doctor/log** | **PASS 37 / FAIL 0 / SKIP 0**（新增 tree-crop）；doctor 8 项全 ok；`log` 读到守护日志 | `acceptance`（私有验收证据） / `journey`（私有验收证据） / `P1 证据`（私有验收证据） |
 | 2026-11-18 11:07 | **D29 P1：run 断点/resume** | 失败落盘 `done/p1 failed/p2`；resume 跳过 p1、重跑 p2、`failed` 清空 | `P1 证据`（私有验收证据） |
 | 2026-11-19 05:45 | **D30 热部署后真机验证（拟人/验证码/handover）** | 同 seed 落点一致 (335,1952)；10 次 tap interval 702–1482ms、dispatch 36–62ms；handover 409 拦截与 return 恢复；challenge=none、risk 为空 | 本轮命令输出（见提交说明）；滑块/验证码页 SKIP |
-| 2026-11-19 08:35 | **D31 设置地图（YAML）：build 8 屏 + seed=1 bench + nav/配方** | 1080x2400；exact 2/3、same_app 2/3；PhoneGo 地图兼容（50 屏/282 ops）；`map nav` 到 WLAN 成功；`map_nav` 配方成功；无线电前后一致 | 本轮命令输出；地图在 `~/.chopin/maps/com.android.settings.yaml` |
+| 2026-11-19 08:35 | **D31 设置地图（YAML）：build 8 屏 + seed=1 bench + nav/配方** | 1080x2400；exact 2/3、same_app 2/3；PhoneGo 地图兼容（50 屏/282 ops）；`map nav` 到 WLAN 成功；`map_nav` 配方成功；无线电前后一致 | 本轮命令输出；地图在 `/root/.chopin/maps/com.android.settings.yaml` |
 | 2026-11-19 08:53 | **D31 15 屏地图 + D30/D31 进入验收矩阵** | 15 屏；seed=1 limit=5 exact 5/5；`acceptance` PASS 40 / FAIL 0 / SKIP 0；`journey` PASS 21 / FAIL 0 | `out/acceptance-20261119-085335/REPORT.md`、`out/journey-20261119-085426/REPORT.md` |
-| 2026-11-19 09:10 | **D31 地图跑到队列耗尽** | 19 屏、complete=true；seed=1 limit=5 exact 5/5、same_app 5/5 | `~/.chopin/maps/com.android.settings.yaml`；本轮 bench 输出 |
+| 2026-11-19 09:10 | **D31 地图跑到队列耗尽** | 19 屏、complete=true；seed=1 limit=5 exact 5/5、same_app 5/5 | `/root/.chopin/maps/com.android.settings.yaml`；本轮 bench 输出 |
 | 2026-11-19 09:30 | **D32 引导入口** | `/doc` 10 步（install 5 + use 5）；`/doc/skill` 从零安装；真机 curl 可读 | 本轮 curl 输出；提交 `D32` |
 | 2026-11-21 16:13 | **S20/D33 深度能力（剪贴板之外的三项）** | metrics 22 请求/多路由、响应 1.3KB；diff 同页零变化、切屏 added 49/removed 169、过期 404；地图漂移 live/drift 两例 | `out/spike-*.json` |
 | 2026-11-22 15:40 | **D37 会话活动与僵尸回收回归** | 僵尸回收+锁屏、持续业务操作免回收、release 锁屏均通过；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0（首次 map 抽样 landed screen_0，重跑通过） | `acceptance`（私有验收证据） / `journey`（私有验收证据） |
@@ -162,3 +163,4 @@ apps/pc-cli/dist/chopin-linux-amd64 acceptance
 
 1. **设备旧模块（已处理）**：`chopin-compat` 已停止 watchdog/Uperf 管理并恢复基线；`miui14-agent-tune` 已清除 `com.mobilerun.portal` 的 a11y 项与 deviceidle 白名单。两模块目录带 `remove` 标记，下次开机由 KernelSU 清理。移除后完整验收 PASS 30 / FAIL 0 / SKIP 0。
 2. **D26 凭据（已决定）**：图案凭据保留为工作区本地文件（0600，gitignore），不提交 Git；`build-module.sh` 在缺失/为空时显式失败并打包。DESIGN D26、AGENTS、WORKSPACE、模块 README 已同步。
+

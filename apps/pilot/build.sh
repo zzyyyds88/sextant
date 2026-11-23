@@ -13,8 +13,8 @@ ROOT=$(cd "$APP/../.." && pwd)
 SDK=${ANDROID_SDK_ROOT:-"$ROOT/tools/android-sdk"}
 BT=${ANDROID_BUILD_TOOLS:-"$SDK/build-tools/android-35"}
 PLATFORM=${ANDROID_PLATFORM:-"$SDK/platforms/android-34/android.jar"}
-PKG=${PKG:-com.chopin.pilot}
-NAME=${NAME:-chopin-pilot}
+PKG=${PKG:-com.sextant.pilot}
+NAME=${NAME:-sextant-pilot}
 VERSION_NAME=${VERSION_NAME:-3.0.0}
 VERSION_CODE=${VERSION_CODE:-300}
 DIST="$APP/dist"
@@ -45,7 +45,7 @@ if grep -rn "ProcessBuilder(\"su\"\|RootShell\|KernelSU allowlist" "$APP/app/src
     fi
 fi
 echo "ok: the only privileged call is Shell.storePattern/clearPattern"
-if [ "${CHOPIN_RELEASE:-0}" = "1" ]; then
+if [ "${SEXTANT_RELEASE:-0}" = "1" ]; then
     echo "[release] certificate and checksum"
     "$BT/apksigner" verify --print-certs "$OUT" | sed -n '1,6p'
     ( cd "$DIST" && sha256sum "$(basename "$OUT")" > "$(basename "$OUT").sha256" )

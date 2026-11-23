@@ -1,4 +1,4 @@
-// Package client is the HTTP client the `chopin` command uses.
+// Package client is the HTTP client the `sextant` command uses.
 //
 // Two invariants matter here:
 //
@@ -40,7 +40,7 @@ func Dir() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("home dir: %w", err)
 	}
-	return filepath.Join(home, ".chopin"), nil
+	return filepath.Join(home, ".sextant"), nil
 }
 
 // ConfigPath is where the paired configuration lives.
@@ -62,7 +62,7 @@ func Load() (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return c, fmt.Errorf("not paired yet: run 'chopin pair --serial <adb>'")
+			return c, fmt.Errorf("not paired yet: run 'sextant pair --serial <adb>'")
 		}
 		return c, fmt.Errorf("read %s: %w", path, err)
 	}
@@ -145,7 +145,7 @@ func (c *Client) Do(method, path string, body any) ([]byte, error) {
 }
 
 // DoWithHeaders is Do plus caller-supplied request headers. The D30 human
-// profile uses X-Chopin-Request-Id to make a multi-step request reproducible
+// profile uses X-Sextant-Request-Id to make a multi-step request reproducible
 // from one seed without making every step tap the same pixel.
 func (c *Client) DoWithHeaders(method, path string, body any, headers map[string]string) ([]byte, error) {
 	var rdr io.Reader
@@ -163,14 +163,14 @@ func (c *Client) DoWithHeaders(method, path string, body any, headers map[string
 	}
 	req.Header.Set("Authorization", "Bearer "+c.cfg.Token)
 	if c.sessionToken != "" {
-		req.Header.Set("X-Chopin-Session", c.sessionToken)
+		req.Header.Set("X-Sextant-Session", c.sessionToken)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	for name, value := range headers {
 		req.Header.Set(name, value)
 	}
-	if c.sessionToken != "" && req.Header.Get("X-Chopin-Session") == "" {
-		req.Header.Set("X-Chopin-Session", c.sessionToken)
+	if c.sessionToken != "" && req.Header.Get("X-Sextant-Session") == "" {
+		req.Header.Set("X-Sextant-Session", c.sessionToken)
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {

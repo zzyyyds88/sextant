@@ -25,14 +25,14 @@
 /apps/pilot/helper/out/
 /apps/pilot/lib/scrcpy-server.jar
 /apps/pilot/lib/scrcpy-server-v4.1
-/apps/pilot/lib/chopin-priv-helper.jar
+/apps/pilot/lib/sextant-priv-helper.jar
 /apps/pilot/pki/
 /apps/pc-cli/dist/
-/modules/chopin-core/bin/chopin-core
-/modules/chopin-core/lib/helper.jar
-/modules/chopin-core/lib/app.apk
-/modules/chopin-core/lib/scrcpy-server.jar
-/modules/chopin-core/helper/out/
+/modules/sextant-core/bin/sextant-core
+/modules/sextant-core/lib/helper.jar
+/modules/sextant-core/lib/app.apk
+/modules/sextant-core/lib/scrcpy-server.jar
+/modules/sextant-core/helper/out/
 /out/
 
 # ---- Agent tooling ----
@@ -45,7 +45,7 @@
 *.zip
 *.bin
 # ...except test fixtures, which are hand-built and act as inputs:
-!modules/chopin-core/tests/fakedev/allowlist-sample.bin
+!modules/sextant-core/tests/fakedev/allowlist-sample.bin
 *.7z
 *.tar
 *.gz
@@ -58,7 +58,7 @@
 *.db
 
 # ---- Credentials / secrets ----
-# D26: the unlock pattern lives at modules/chopin-core/config/unlock-secret
+# D26: the unlock pattern lives at modules/sextant-core/config/unlock-secret
 # as a local build input (0600). It is matched by *secret* below and must never
 # be force-added; build-module.sh fails if it is missing.
 *.key

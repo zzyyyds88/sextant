@@ -1,9 +1,0 @@
-# Build artifacts. Reproduce with:
-#   tools/scripts/build-core.sh           -> bin/chopin-core
-#   tools/scripts/build-helper.sh            -> lib/helper.jar
-#   apps/pilot/build.sh                     -> lib/app.apk
-#   modules/chopin-core/lib/scrcpy-server.jar (downloaded, not tracked)
-/bin/chopin-core
-/lib/helper.jar
-/lib/app.apk
-/lib/scrcpy-server.jar

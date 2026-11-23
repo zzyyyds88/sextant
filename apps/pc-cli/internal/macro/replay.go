@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	"chopin/internal/appmap"
-	"chopin/internal/uiapi"
+	"sextant/internal/appmap"
+	"sextant/internal/uiapi"
 )
 
 // Options changes how strict a replay is.

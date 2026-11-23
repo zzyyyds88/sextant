@@ -8,7 +8,7 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-CLI=${CLI:-$ROOT/apps/pc-cli/dist/chopin-linux-amd64}
+CLI=${CLI:-$ROOT/apps/pc-cli/dist/sextant-linux-amd64}
 
 if [ ! -x "$CLI" ]; then
     echo "no PC CLI at $CLI — run apps/pc-cli/build.sh first" >&2

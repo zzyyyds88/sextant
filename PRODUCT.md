@@ -1,6 +1,6 @@
 # Sextant
 
-> 项目展示名：**Sextant**。客户端 APK 当前仍叫 Chopin Pilot（`com.chopin.pilot`），技术标识暂不迁移。
+> 项目展示名：**Sextant**。客户端 APK 当前仍叫 Sextant Pilot（`com.sextant.pilot`），技术标识暂不迁移。
 
 ## 用户
 

@@ -9,7 +9,7 @@ import (
 
 // Session is the local handle for the write session this computer claimed.
 // It is single-user, single-device state: concurrent agents must use their own
-// HTTP clients and send X-Chopin-Session themselves (D37).
+// HTTP clients and send X-Sextant-Session themselves (D37).
 type Session struct {
 	Server string `json:"server"`
 	ID     string `json:"id"`

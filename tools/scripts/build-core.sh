@@ -7,8 +7,8 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-SRC="$ROOT/modules/chopin-core/src"
-OUT="$ROOT/modules/chopin-core/bin/chopin-core"
+SRC="$ROOT/modules/sextant-core/src"
+OUT="$ROOT/modules/sextant-core/bin/sextant-core"
 GO=${GO:-$ROOT/tools/go/bin/go}
 VERSION=${VERSION:-3.0.0}
 
@@ -20,7 +20,7 @@ mkdir -p "$(dirname "$OUT")"
 ( cd "$SRC" && \
   GOPROXY=${GOPROXY:-off} CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
   "$GO" build -trimpath -ldflags="-s -w -X main.version=$VERSION" \
-      -o "$OUT" ./cmd/chopin-core )
+      -o "$OUT" ./cmd/sextant-core )
 chmod 0755 "$OUT"
 ls -l "$OUT"
 file "$OUT" 2>/dev/null || true

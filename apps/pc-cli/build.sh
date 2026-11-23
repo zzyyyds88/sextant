@@ -16,11 +16,11 @@ mkdir -p "$DIST"
 
 build() {
     local goos=$1 goarch=$2 ext=$3
-    local out="$DIST/chopin-$goos-$goarch$ext"
+    local out="$DIST/sextant-$goos-$goarch$ext"
     echo "building $out"
     ( cd "$APP" && \
       GOPROXY=${GOPROXY:-off} CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch \
-      "$GO" build -trimpath -ldflags '-s -w' -o "$out" ./cmd/chopin )
+      "$GO" build -trimpath -ldflags '-s -w' -o "$out" ./cmd/sextant )
     ls -l "$out"
 }
 

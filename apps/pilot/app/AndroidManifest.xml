@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.chopin.pilot">
+    package="com.sextant.pilot">
 
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
 
@@ -116,7 +116,7 @@
         <!-- 引擎 ↔ IME 的进程间控制面（root/shell 访问）。 -->
         <provider
             android:name=".ime.ImeControlProvider"
-            android:authorities="com.chopin.pilot.ime"
+            android:authorities="com.sextant.pilot.ime"
             android:exported="true"
             android:grantUriPermissions="false" />
     </application>

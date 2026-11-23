@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install chopin-core onto the phone.
+# Install sextant-core onto the phone.
 #
 # The module IS the product (DESIGN D20): it starts the daemon as root at boot, so
 # there is no allowlist to stage, no second reboot to catch up, and no root grant
@@ -14,9 +14,9 @@ set -uo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 SERIAL=${SERIAL:-}
-PKG=${PKG:-com.chopin.pilot}
-ZIP="$ROOT/modules/chopin-core.zip"
-CLI=${CLI:-$ROOT/apps/pc-cli/dist/chopin-linux-amd64}
+PKG=${PKG:-com.sextant.pilot}
+ZIP="$ROOT/modules/sextant-core.zip"
+CLI=${CLI:-$ROOT/apps/pc-cli/dist/sextant-linux-amd64}
 
 MODE=install
 REBOOT=1
@@ -41,7 +41,7 @@ SU() { adb -s "$SERIAL" shell "su -c '$1'" 2>&1 | tr -d '\r'; }
 
 say "preflight"
 command -v adb >/dev/null || die "adb not found in PATH"
-[ "$MODE" = rollback ] || [ -f "$ZIP" ] || die "missing $ZIP (run tools/scripts/build-module.sh modules/chopin-core)"
+[ "$MODE" = rollback ] || [ -f "$ZIP" ] || die "missing $ZIP (run tools/scripts/build-module.sh modules/sextant-core)"
 [ "$MODE" = rollback ] || [ -x "$CLI" ] || die "missing PC CLI at $CLI (run apps/pc-cli/build.sh)"
 
 adb connect "$SERIAL" >/dev/null 2>&1 || true
@@ -55,7 +55,7 @@ info "root: ok"
 
 if [ "$MODE" = rollback ]; then
     say "rollback"
-    SU 'ksud module uninstall chopin-core' | sed 's/^/   /'
+    SU 'ksud module uninstall sextant-core' | sed 's/^/   /'
     adb -s "$SERIAL" uninstall "$PKG" 2>&1 | sed 's/^/   /'
     say "reboot (uninstall.sh restores the accessibility setting on the way out)"
     adb -s "$SERIAL" reboot
@@ -63,8 +63,8 @@ if [ "$MODE" = rollback ]; then
 fi
 
 say "install module"
-adb -s "$SERIAL" push "$ZIP" /data/local/tmp/chopin-core.zip 2>&1 | tail -1 | sed 's/^/   /'
-out=$(SU 'ksud module install /data/local/tmp/chopin-core.zip')
+adb -s "$SERIAL" push "$ZIP" /data/local/tmp/sextant-core.zip 2>&1 | tail -1 | sed 's/^/   /'
+out=$(SU 'ksud module install /data/local/tmp/sextant-core.zip')
 printf '%s\n' "$out" | tail -3 | sed 's/^/   /'
 case "$out" in
     *"Done"*) info "module installed" ;;
@@ -82,9 +82,9 @@ if [ "$REBOOT" = 0 ]; then
     # Activation without a reboot: KernelSU stages into modules_update, and the
     # daemon has to be stopped before its binary can be replaced.
     say "activate without rebooting"
-    SU '/data/local/tmp/stop-hx.sh >/dev/null 2>&1 || pkill -f "chopin-core daemon" || true' >/dev/null
-    SU 'cp -a /data/adb/modules_update/chopin-core/. /data/adb/modules/chopin-core/ && rm -rf /data/adb/modules_update/chopin-core && echo activated' | sed 's/^/   /'
-    SU 'setsid /data/adb/modules/chopin-core/bin/chopin-core daemon --config /data/adb/chopin-core/config/core.json </dev/null >/data/adb/chopin-core/log/daemon.out 2>&1 &' >/dev/null
+    SU '/data/local/tmp/stop-hx.sh >/dev/null 2>&1 || pkill -f "sextant-core daemon" || true' >/dev/null
+    SU 'cp -a /data/adb/modules_update/sextant-core/. /data/adb/modules/sextant-core/ && rm -rf /data/adb/modules_update/sextant-core && echo activated' | sed 's/^/   /'
+    SU 'setsid /data/adb/modules/sextant-core/bin/sextant-core daemon --config /data/adb/sextant-core/config/core.json </dev/null >/data/adb/sextant-core/log/daemon.out 2>&1 &' >/dev/null
 else
     say "reboot"
     echo "   service.sh starts the daemon as root after sys.boot_completed; nothing else to do."
@@ -99,7 +99,7 @@ for _ in $(seq 1 60); do
     if "$CLI" health 2>/dev/null | grep -q '"ok"'; then ready=1; break; fi
     sleep 3
 done
-[ "$ready" = 1 ] || die "the daemon did not answer within ~3 minutes. Check: adb -s $SERIAL shell su -c 'cat /data/adb/chopin-core/log/core.log'"
+[ "$ready" = 1 ] || die "the daemon did not answer within ~3 minutes. Check: adb -s $SERIAL shell su -c 'cat /data/adb/sextant-core/log/core.log'"
 info "daemon answering"
 
 say "pair the PC (idempotent)"
@@ -108,4 +108,4 @@ say "pair the PC (idempotent)"
 say "verify"
 "$CLI" status | sed 's/^/   /'
 say "done"
-echo "   next: chopin acceptance"
+echo "   next: sextant acceptance"

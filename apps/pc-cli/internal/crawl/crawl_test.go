@@ -3,8 +3,8 @@ package crawl
 import (
 	"testing"
 
-	"chopin/internal/appmap"
-	"chopin/internal/uiapi"
+	"sextant/internal/appmap"
+	"sextant/internal/uiapi"
 )
 
 func TestConsequentialLabelsAreGuarded(t *testing.T) {

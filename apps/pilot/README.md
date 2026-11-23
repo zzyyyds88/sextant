@@ -1,9 +1,9 @@
-# Chopin Pilot（chopin-pilot，客户端 APK）
+# Sextant Pilot（sextant-pilot，客户端 APK）
 
-> Sextant 项目的客户端 APK；当前应用名与包名仍为 Chopin Pilot / `com.chopin.pilot`。
+> Sextant 项目的客户端 APK；当前应用名与包名为 Sextant Pilot / `com.sextant.pilot`。
 
 一个**零 root** 客户端：状态页 + 无障碍 HUD + 输入法。设备端的全部特权工作都由
-KernelSU 模块 `chopin-core` 以 root 拉起的守护进程完成（`docs/DESIGN.md` D20/D21）。
+KernelSU 模块 `sextant-core` 以 root 拉起的守护进程完成（`docs/DESIGN.md` D20/D21）。
 
 它**不做**任何特权动作：
 
@@ -11,7 +11,7 @@ KernelSU 模块 `chopin-core` 以 root 拉起的守护进程完成（`docs/DESIG
 - 不写 `enabled_accessibility_services`、不写 allowlist；
 - 不解析 CLI 文本 —— 状态只读守护发布的 `app/status.json`。
 
-唯一例外是**写解锁凭据**：值经 stdin 传给 `chopin-core ctl secret set-unlock`
+唯一例外是**写解锁凭据**：值经 stdin 传给 `sextant-core ctl secret set-unlock`
 （锁屏下没有可用的远程通道，凭据必须能从手机上录入）。这条路径写进 root-only 文件，
 App 从不读回值。
 
@@ -19,12 +19,12 @@ App 从不读回值。
 
 ```bash
 apps/pilot/build.sh
-# 产物：apps/pilot/dist/chopin-pilot-<version>.apk
+# 产物：apps/pilot/dist/sextant-pilot-<version>.apk
 ```
 
 构建脚本最后会做一条断言：除 `Shell.java` 外不允许出现 `ProcessBuilder("su"`。
 签名密钥在 `apps/pilot/build/keystore/`（忽略，升级必须复用）。这是本地自签名
-key；准备发布时用 `CHOPIN_RELEASE=1` 显式指定专用 keystore 与密码文件，步骤见
+key；准备发布时用 `SEXTANT_RELEASE=1` 显式指定专用 keystore 与密码文件，步骤见
 [`docs/RELEASE.md`](../../docs/RELEASE.md)。
 
 ## 安装
@@ -32,7 +32,7 @@ key；准备发布时用 `CHOPIN_RELEASE=1` 显式指定专用 keystore 与密�
 模块会安装它（`service.sh` 比对 md5 后 `pm install -r`）。手动安装也可以：
 
 ```bash
-adb install -r apps/pilot/dist/chopin-pilot-*.apk
+adb install -r apps/pilot/dist/sextant-pilot-*.apk
 ```
 
 ## 状态页
@@ -47,7 +47,7 @@ adb install -r apps/pilot/dist/chopin-pilot-*.apk
 | 会话 | `sessions.active/max` |
 | 解锁凭据/锁屏 | `unlock.{credential,screen_locked,last_attempt}` |
 
-状态文件的真实位置是 `/data/user/0/com.chopin.pilot/files/status.json`（守护写入该 App
+状态文件的真实位置是 `/data/user/0/com.sextant.pilot/files/status.json`（守护写入该 App
 私有目录的副本）；`/data/adb` 是 0700 root，App 连目录都进不去，所以真源在那里、
 可读副本在这里，两份内容一致。
 
@@ -59,8 +59,8 @@ schema 不匹配时页面显式报错，不猜。
 |---|---|
 | `MainActivity` | 状态页、解锁按钮、凭据录入（showWhenLocked，锁屏可开） |
 | `hud/RemoteA11yService` | 无障碍 HUD：状态胶囊 + 停止；`TYPE_ACCESSIBILITY_OVERLAY` |
-| `ime/RemoteImeService` | 输入法服务（`com.chopin.pilot/.ime.RemoteImeService`） |
-| `ime/ImeControlProvider` | 控制 provider（authority `com.chopin.pilot.ime`，与包名和 service 不同） |
+| `ime/RemoteImeService` | 输入法服务（`com.sextant.pilot/.ime.RemoteImeService`） |
+| `ime/ImeControlProvider` | 控制 provider（authority `com.sextant.pilot.ime`，与包名和 service 不同） |
 
 IME 的三个字符串必须分开配置，混用会让文字注入永远失败（已发生过的 bug）。
 

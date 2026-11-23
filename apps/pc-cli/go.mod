@@ -1,4 +1,4 @@
-module chopin
+module sextant
 
 go 1.25.0
 

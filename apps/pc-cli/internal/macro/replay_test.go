@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"chopin/internal/appmap"
-	"chopin/internal/uiapi"
+	"sextant/internal/appmap"
+	"sextant/internal/uiapi"
 )
 
 // fakeDoer answers the endpoints a replay touches and records the calls, so a

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"chopin/internal/uiapi"
+	"sextant/internal/uiapi"
 )
 
 // fixture is a tree captured from the real device (Settings main page,

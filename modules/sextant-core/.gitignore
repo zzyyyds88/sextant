@@ -1,0 +1,9 @@
+# Build artifacts. Reproduce with:
+#   tools/scripts/build-core.sh           -> bin/sextant-core
+#   tools/scripts/build-helper.sh            -> lib/helper.jar
+#   apps/pilot/build.sh                     -> lib/app.apk
+#   modules/sextant-core/lib/scrcpy-server.jar (downloaded, not tracked)
+/bin/sextant-core
+/lib/helper.jar
+/lib/app.apk
+/lib/scrcpy-server.jar

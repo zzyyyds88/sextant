@@ -26,16 +26,16 @@ WORK=$(mktemp -d); trap 'rm -rf "$WORK"' EXIT
 
 echo "== manifest =="
 BADGING=$("$AAPT2" dump badging "$APK" 2>/dev/null)
-has  "package is com.chopin.pilot" "$BADGING" "package: name='com.chopin.pilot'"
+has  "package is com.sextant.pilot" "$BADGING" "package: name='com.sextant.pilot'"
 has  "minSdk 29"                    "$BADGING" "minSdkVersion:'29'"
 has  "targetSdk 33"                 "$BADGING" "targetSdkVersion:'33'"
-has  "has a launcher activity"      "$BADGING" "launchable-activity: name='com.chopin.pilot.MainActivity'"
+has  "has a launcher activity"      "$BADGING" "launchable-activity: name='com.sextant.pilot.MainActivity'"
 
 echo "== components =="
 MANIFEST=$("$AAPT2" dump xmltree --file AndroidManifest.xml "$APK" 2>/dev/null)
 has "accessibility service declared" "$MANIFEST" "RemoteA11yService"
 has "IME service declared"           "$MANIFEST" "RemoteImeService"
-has "IME provider declared"          "$MANIFEST" "com.chopin.pilot.ime"
+has "IME provider declared"          "$MANIFEST" "com.sextant.pilot.ime"
 has "boot receiver declared"         "$MANIFEST" "BootReceiver"
 
 echo "== zero root (the whole point of D21) =="
@@ -57,25 +57,25 @@ DEXSTR=$(strings "$WORK"/classes*.dex 2>/dev/null | sort -u)
 # unlock credential. What must be gone is every path that used to run an engine.
 has    "the one su call is the ctl secret write" "$DEXSTR" "ctl secret set-unlock"
 hasnt "no engine staging in dex"       "$DEXSTR" "libremote_engine"
-hasnt "no old harness CLI in dex"      "$DEXSTR" "chopin-harnessctl"
-hasnt "no old module paths in dex"     "$DEXSTR" "/data/adb/chopin-remote"
-hasnt "no old harness module paths in dex" "$DEXSTR" "/data/adb/chopin-harness"
-has    "reads the published status"    "$DEXSTR" "/data/user/0/com.chopin.pilot/files/status.json"
+hasnt "no old harness CLI in dex"      "$DEXSTR" "sextant-harnessctl"
+hasnt "no old module paths in dex"     "$DEXSTR" "/data/adb/sextant-remote"
+hasnt "no old harness module paths in dex" "$DEXSTR" "/data/adb/sextant-harness"
+has    "reads the published status"    "$DEXSTR" "/data/user/0/com.sextant.pilot/files/status.json"
 
 echo "== signature =="
 "$APKSIGNER" verify "$APK" >/dev/null 2>&1 && ok "apksigner verify" || bad "apksigner verify"
 CERT=$("$APKSIGNER" verify --print-certs "$APK" 2>/dev/null | head -1)
 # The signing key is deliberately reused from the pre-3.0 app, so its DN is the
-# historical CN=com.chopin.remote. Do not tie the assertion to the new package
+# historical CN=com.sextant.remote. Do not tie the assertion to the new package
 # name: what matters is that the APK is signed and the local keystore is reused.
 has "APK is signed with a certificate" "$CERT" "Signer #1 certificate DN:"
 
 echo "== source hygiene =="
 # The single privileged call is documented in apps/pilot/README.md: writing the
-# unlock credential through `su` + `chopin-core ctl secret set-unlock`.
+# unlock credential through `su` + `sextant-core ctl secret set-unlock`.
 offenders=$(grep -rln 'ProcessBuilder("su"' "$APP/app/src" 2>/dev/null | grep -v 'Shell.java' || true)
 if [ -z "$offenders" ]; then ok "only Shell.java runs su"; else bad "privileged shell outside Shell.java" "$offenders"; fi
-grep -q 'ctl secret set-unlock' "$APP/app/src/com/chopin/pilot/Shell.java" 2>/dev/null \
+grep -q 'ctl secret set-unlock' "$APP/app/src/com/sextant/pilot/Shell.java" 2>/dev/null \
     && ok "Shell.java uses the documented ctl subcommand" \
     || bad "Shell.java no longer uses ctl secret set-unlock"
 

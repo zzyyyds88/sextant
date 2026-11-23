@@ -7,9 +7,9 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-SRC="$ROOT/modules/chopin-core/helper/src"
-OUT="$ROOT/modules/chopin-core/lib/helper.jar"
-BUILD="$ROOT/modules/chopin-core/helper/out"
+SRC="$ROOT/modules/sextant-core/helper/src"
+OUT="$ROOT/modules/sextant-core/lib/helper.jar"
+BUILD="$ROOT/modules/sextant-core/helper/out"
 SDK=${ANDROID_SDK_ROOT:-"$ROOT/tools/android-sdk"}
 BT=${ANDROID_BUILD_TOOLS:-"$SDK/build-tools/android-35"}
 PLATFORM=${ANDROID_PLATFORM:-"$SDK/platforms/android-34/android.jar"}

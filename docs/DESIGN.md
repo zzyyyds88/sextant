@@ -4,11 +4,11 @@
 > Owner：项目用户；执行 agent 只能在确认范围内修改
 > **本文件是唯一设计真源。** 任务状态与真机验收记录见 `docs/TASKS.md`；各产物使用说明见各自 README。
 >
-> 本工作区**只负责远控**：KernelSU 模块 `chopin-core`、零 root 客户端 APK `apps/pilot`、电脑侧 CLI `apps/pc-cli`。
+> 本工作区**只负责远控**：KernelSU 模块 `sextant-core`、零 root 客户端 APK `apps/pilot`、电脑侧 CLI `apps/pc-cli`。
 > ROM/反编译/移植等研究资料已迁到 `/root/chopin-research/`，**不属于交付物，也不作为设计真源**；需要查证据时去那里看。
 > 本工作区不再维护 `chopin-compat`、`miui14-agent-tune` 或其他 KSU 模块。
 >
-> 命名：**Sextant** 是项目展示名；技术标识（`chopin-core`、`chopin` CLI、`com.chopin.pilot`）暂保留。
+> 命名：**Sextant** 是项目名；D38 决定全量技术改名（CLI `sextant`、模块 `sextant-core`、APK `com.sextant.pilot`），旧 `chopin-*` 标识迁移后删除。
 
 ---
 
@@ -19,16 +19,16 @@
 在 chopin（Redmi Note 10 Pro 5G / POCO X3 GT）的 MIUI 14 上，提供一套**由电脑上的 agent 通过网络驱动手机**的完整能力，并且在锁屏状态下也能无人值守开工。
 
 1. **一个设备端制品**：刷一个 KernelSU 模块 zip 即完成全部安装；模块自带守护进程、root helper、scrcpy-server、WebUI 静态资源，以及它负责安装的 APK。
-2. **一个特权宿主**：模块开机以 root 拉起唯一守护进程（`chopin-core daemon`），全部特权语义（a11y 绑定与保活、MIUI 后台/doze/权限、解锁、注入、截图、会话、状态、审计）都在这个进程里实现。
+2. **一个特权宿主**：模块开机以 root 拉起唯一守护进程（`sextant-core daemon`），全部特权语义（a11y 绑定与保活、MIUI 后台/doze/权限、解锁、注入、截图、会话、状态、审计）都在这个进程里实现。
 3. **零 root 客户端**：APK 只做 UI / HUD / IME，不申请 KernelSU root、不执行 `su`、不拉起引擎、不写 allowlist 与无障碍 settings。
 4. **状态可查**：守护把真实状态写成结构化 JSON 并提供 `/v1/status`；APK 与电脑都读结构化结果，不解析任何 CLI 文本。
-5. **可驱动**：电脑侧交付 `chopin` 命令行客户端，一条 `adb` 命令完成首次配对，之后一组子命令覆盖全部能力。
+5. **可驱动**：电脑侧交付 `sextant` 命令行客户端，一条 `adb` 命令完成首次配对，之后一组子命令覆盖全部能力。
 6. **能力不降级**：未实现或不可用的能力以结构化错误失败，不做假成功、不做只读兜底、不做静默降级。
 
 ### 1.2 范围
 
 - 在现有 MIUI 14 上做**可回退的远控定制**：KernelSU 模块 + 零 root APK，不刷镜像、不做源码级系统重建。
-- 设备端只交付 `modules/chopin-core`；电脑端只交付 `apps/pc-cli`；客户端只交付 `apps/pilot`。
+- 设备端只交付 `modules/sextant-core`；电脑端只交付 `apps/pc-cli`；客户端只交付 `apps/pilot`。
 - 设备可回退：不丢用户数据、不 relock BL、不刷未验证镜像、不破坏 KernelSU/ADB 救援路径。
 - 需要理解目标应用或 ROM 行为时，可以查阅 `/root/chopin-research/` 下的反编译/研究资料；这些只是证据，不是产品真源。
 
@@ -52,8 +52,8 @@
 | 分区 | 虚拟 A/B，super group `main`，stock system/vendor/product/system_ext 为 ext4 |
 | BL | <bootloader-state> |
 | Root | KernelSU 3.1.8 |
-| 设备端制品 | `modules/chopin-core`（唯一交付物，见 §3） |
-| 客户端 | `apps/pilot`（APK：状态页 + HUD + IME，零 root）、`apps/pc-cli`（电脑侧 `chopin` 命令） |
+| 设备端制品 | `modules/sextant-core`（唯一交付物，见 §3） |
+| 客户端 | `apps/pilot`（APK：状态页 + HUD + IME，零 root）、`apps/pc-cli`（电脑侧 `sextant` 命令） |
 | ADB | `<adb-serial>`；授权 key 在 `adbhome/`（敏感，不提交） |
 | 工作主机 | 本机构建环境：`/root/chopin-ksu` 工作区；研究资料在 `/root/chopin-research/` |
 | 版本管理 | Git `main`，只跟踪远控源码/脚本/配置/当前文档；大文件、镜像、APK/JAR、下载和凭据忽略（凭据例外见 D26） |
@@ -68,7 +68,7 @@
 
 ### 2.2 工作区边界
 
-- 仓库只保留远控主线：`modules/chopin-core`、`apps/pilot`、`apps/pc-cli`、当前文档、构建/验收脚本。
+- 仓库只保留远控主线：`modules/sextant-core`、`apps/pilot`、`apps/pc-cli`、当前文档、构建/验收脚本。
 - 非远控资料统一放在 `/root/chopin-research/`：
   - `decompiled/`：JADX/APKTool 反编译树与索引；
   - `downloads/`、`extract/`：官方 ROM zip、payload/分区镜像；
@@ -83,13 +83,13 @@
 ## 3. 交付物与目录
 
 ```
-modules/chopin-core/          # 唯一设备端制品（KernelSU 模块 zip）
+modules/sextant-core/          # 唯一设备端制品（KernelSU 模块 zip）
 ├─ module.prop
 ├─ customize.sh                  # 安装时权限、目录、可选预装 APK
 ├─ post-fs-data.sh               # 只做无 framework 依赖的准备（目录/权限/日志轮转）
 ├─ service.sh                    # boot_completed 后以 root 拉起守护；不承载语义
 ├─ uninstall.sh                  # 停止守护、卸 APK、还原写入、清理运行目录
-├─ bin/chopin-core               # Go 单二进制：daemon 子命令 + ctl 子命令
+├─ bin/sextant-core               # Go 单二进制：daemon 子命令 + ctl 子命令
 ├─ lib/helper.jar                # root app_process helper（binder/a11y/通知/SMS/定位/音频）
 ├─ lib/scrcpy-server.jar         # 虚拟屏/取帧
 ├─ webui/                        # /ui 静态资源（embed 在 Go 源码里）
@@ -101,10 +101,10 @@ modules/chopin-core/          # 唯一设备端制品（KernelSU 模块 zip）
 apps/pilot/                     # 零 root APK（UI / HUD / IME）
 ├─ app/                          # Activity + HUD(a11y) + IME + 前台服务 + helper Java 源
 ├─ build.sh                      # 构建（aapt2/javac/d8/apksigner）
-└─ dist/chopin-pilot-<version>.apk  # 产物（ignored）
+└─ dist/sextant-pilot-<version>.apk  # 产物（ignored）
 
 apps/pc-cli/                     # 电脑侧命令行客户端（Go）
-├─ main.go / cmd/chopin/         # 子命令、验收矩阵、journey
+├─ main.go / cmd/sextant/        # 子命令、验收矩阵、journey
 └─ README.md
 
 docs/DESIGN.md                   # 唯一设计真源（本文件）
@@ -112,14 +112,14 @@ docs/TASKS.md                    # 任务切片与真机验收记录
 docs/ACCEPTANCE.md               # 验收流程与判定规则
 README.md                        # 索引
 AGENTS.md                        # agent 协作宪法
-modules/chopin-core/README.md # 模块使用说明
+modules/sextant-core/README.md # 模块使用说明
 apps/pilot/README.md            # APK 使用说明
 apps/pc-cli/README.md            # PC CLI 使用说明
 ```
 
 ### 3.1 设备运行时目录（统一到一处）
 
-`/data/adb/chopin-core/`
+`/data/adb/sextant-core/`
 
 | 路径 | 内容 | 权限 |
 |---|---|---|
@@ -145,8 +145,8 @@ apps/pc-cli/README.md            # PC CLI 使用说明
 
 | 层 | owner | 职责 | 禁止 |
 |---|---|---|---|
-| 设备端守护 | `modules/chopin-core/src`（Go） | 全部特权语义：a11y 绑定/保活、MIUI 后台/doze/权限、解锁、输入注入、截图/UI 树/OCR、会话与锁、虚拟屏、文件/设置/应用/通知/短信/定位、触发器、WebRTC、音频、审计、状态真源 | 不做 UI 渲染；不写 APK 私有目录（除发布给 APK 的副本） |
-| 模块 shell | `modules/chopin-core/*.sh` | 开机准备目录与权限、按需安装内置 APK、拉起/停止守护、日志轮转 | 不写 settings/appops、不判定能力状态、不遍历目标清单、不解释授权 |
+| 设备端守护 | `modules/sextant-core/src`（Go） | 全部特权语义：a11y 绑定/保活、MIUI 后台/doze/权限、解锁、输入注入、截图/UI 树/OCR、会话与锁、虚拟屏、文件/设置/应用/通知/短信/定位、触发器、WebRTC、音频、审计、状态真源 | 不做 UI 渲染；不写 APK 私有目录（除发布给 APK 的副本） |
+| 模块 shell | `modules/sextant-core/*.sh` | 开机准备目录与权限、按需安装内置 APK、拉起/停止守护、日志轮转 | 不写 settings/appops、不判定能力状态、不遍历目标清单、不解释授权 |
 | 客户端 APK | `apps/pilot` | 状态页（读 `app/status.json`）、HUD 叠加层、IME、前台服务（订阅状态） | 不申请 root、不执行 `su`、不拉起引擎、不写 allowlist、不写 `enabled_accessibility_services` |
 | PC 客户端 | `apps/pc-cli` | 配对、健康检查、按能力调用 `/v1`、导出 OpenAPI、验收矩阵 | 不承载业务判断；不缓存明文凭据 |
 
@@ -160,7 +160,7 @@ apps/pc-cli/README.md            # PC CLI 使用说明
 开机
  └─ post-fs-data.sh            # /data 可写、framework 未起：只建目录、权限、日志轮转
      └─ service.sh             # 等 sys.boot_completed=1（不等待 CE/解锁）
-         └─ exec chopin-core daemon
+         └─ exec sextant-core daemon
              ├─ flock state/engine.lock（单实例，抢不到即退出并记日志）
              ├─ 起 TLS 服务 0.0.0.0:8443（Bearer + 证书 pin）
              ├─ 首轮状态发布 → state/status.json + app/ 副本
@@ -191,7 +191,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 ## 5. 能力矩阵（用户圈定范围）
 
-全部保留，按切片实现（见 §11 与 `docs/TASKS.md`）。精确路由以 `modules/chopin-core/src/internal/engine/routes.go` 和 `/doc` 为准。
+全部保留，按切片实现（见 §11 与 `docs/TASKS.md`）。精确路由以 `modules/sextant-core/src/internal/engine/routes.go` 和 `/doc` 为准。
 
 | 组 | 能力 | 切片 |
 |---|---|---|
@@ -211,7 +211,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 | WebUI 与文档 | `/ui`、`/doc`（OpenAPI）、`/doc/skill`（agent 手册与可安装包） | S6/S17 |
 | HUD | heartbeat/pause/stop/ack/events/state（loopback 限定） | S6/S16 |
 | 无人值守 | 锁屏下自动解锁并继续作业 | S2+S7 |
-| 初始化 | `chopin init`、ctl secret set-unlock/set-sim、动画基线还原 | S17 |
+| 初始化 | `sextant init`、ctl secret set-unlock/set-sim、动画基线还原 | S17 |
 
 ---
 
@@ -524,7 +524,26 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 - 非目标：不实现客户端执行器生命周期托管（使用端仍应在 agent 子进程退出时 release）；不区分只读/写业务请求（都算活动）；不 ban 僵尸 agent；不改变 claim 自动解锁。
 - 验收：单测 Touch/心跳/僵尸判定/阈值 0；真机 claim 后只心跳不操作，短 zombie 配置下会话被回收并锁屏；claim 后持续业务请求不被回收；CLI 后续命令带 session；acceptance 与 journey 不回归。
 
+#### D38：Sextant 全量技术改名与迁移（2026-11-23）
+
+- 背景：展示名已改为 Sextant，但设备端模块、CLI、APK 包、状态目录和请求头仍是 `chopin-*`。用户确认全量改名，包括 APK 包名，并接受旧 APK 卸载带来的 APK 私有数据丢失。
+- 决策：
+  1. **命名**：项目 Sextant；CLI 可执行文件 `sextant`；设备端模块 `sextant-core`；APK `com.sextant.pilot` / `Sextant Pilot`；root helper `com.sextant.core.helper`；priv-app 目录 `SextantPilot`。
+  2. **运行时**：数据根 `/data/adb/sextant-core`；ctl 与守护二进制 `sextant-core`；锁、pid、日志、pki、config、state 全在新根下；helper socket `@sextant-core-helper`；TLS 证书 CN `sextant-core`、O `sextant`；环境变量统一 `SEXTANT_*`。
+  3. **CLI**：配置目录 `~/.sextant`；会话 `~/.sextant/session.json`；地图 `~/.sextant/maps/`；运行目录 `~/.sextant/runs/`；skill 名 `sextant-remote`；请求头 `X-Sextant-Session`、`X-Sextant-Request-Id`、`X-Sextant-Client`、`X-Sextant-Schema`、`X-Sextant-Frame-*`。
+  4. **API 不变**：`/v1/*` 路径、config schema 1、status schema 1 不改；这样协议行为不变，只改身份与可见命名。APK 仍读 `status.json`/`api.json`/`app-token`/`hud.json`，但目录改为 `/data/user/0/com.sextant.pilot/files`。
+  5. **APK 组件**：package `com.sextant.pilot`；a11y `com.sextant.pilot/.hud.RemoteA11yService`；compat `com.sextant.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService`；IME `com.sextant.pilot/.ime.RemoteImeService`；provider authority `com.sextant.pilot.ime`。`com.google.android.accessibility.selecttospeak.SelectToSpeakService` 类名必须保留（微信白名单依赖），只换包前缀。
+  6. **不保留旧身份**：迁移后不安装 `com.sextant.pilot`，不启动 `sextant-core`，不保留 `chopin` CLI 别名、旧环境变量、旧请求头、旧状态路径或旧模块 ID。不迁移旧 APK 私有数据（已确认丢失）。
+  7. **迁移**：新增 `tools/scripts/migrate-to-sextant.sh`，必须同时提供 `SERIAL` 与 `CONFIRM=1`。顺序：备份旧模块/状态/CLI 配置到 root-only 目录 → 停旧守护 → 备份并卸载旧 APK `com.sextant.pilot` → 备份后移除旧模块 `sextant-core` 与 `/data/adb/ksu/bin/chopin-core` → 安装新模块 → 迁移 `config/unlock-secret`、`config/sim-pin`、`state/tokens.json`、`state/baseline/` 等持久状态到 `/data/adb/sextant-core` → 生成新 TLS 证书并重新配对 CLI → 安装新 APK → 重启/激活 → `sextant health`/`doctor`/`acceptance`/`journey` 验收。会话、缓存、旧 TLS 证书不迁移。
+  8. **发布**：资产改名为 `sextant-pilot-<version>.apk`、`sextant-core.zip`、`sextant-linux-amd64`、`sextant-windows-amd64.exe`；签名 key 不轮换；旧 `chopin-*` 资产不再发布或作为别名。
+  9. **设备代号**：硬件参考机型仍叫 chopin（Redmi Note 10 Pro 5G / POCO X3 GT）；文档可以继续用 chopin 指设备，但产品/技术标识不再用 `chopin-*`。
+- 非目标：不改 `/v1/*` 路径和 schema 数字；不迁移旧 APK 私有数据；不保留双模块/双包/双 CLI 兼容层；不重签或轮换 release key；不把历史验收证据里的旧名改写成新名。
+- 验收：静态门禁；模块 zip 内只有 `sextant-core` 身份；设备上 `ksud module list` 只有 `sextant-core`、`pm list packages` 只有 `com.sextant.pilot`、无旧 symlink/旧进程；a11y 与 compat 都 `hasBound=true`；IME 三字段正确；`sextant health/status/acceptance/journey` 通过；审计路径与请求头为新名；迁移前备份可恢复。
+- 风险：迁移是破坏性操作，旧 APK 数据不可恢复；旧模块卸载脚本可能删除旧状态，所以必须先备份再卸载；新 TLS 证书会改变 pin，必须重新配对；迁移失败时用备份恢复旧模块/APK并重启。
+
 ### 6.2 仍然有效的早期决策
+
+> 说明：以下 6.2 中仍有效的早期决策保留其历史命名；D38 已把当前技术标识统一改为 `sextant-*`，行为不变。
 
 以下决策承载的是真机证据与 ROM 事实，不是可选项。与远控无关的 ROM 移植/镜像决策已移出本工作区。
 
@@ -641,14 +660,14 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 {
   "schema": 1,
   "listen": "0.0.0.0:8443",
-  "data_dir": "/data/adb/chopin-core",
+  "data_dir": "/data/adb/sextant-core",
   "app": {
-    "package": "com.chopin.pilot",
-    "a11y": "com.chopin.pilot/.hud.RemoteA11yService",
-    "a11y_compat": "com.chopin.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService",
-    "ime_service": "com.chopin.pilot/.ime.RemoteImeService",
-    "ime_provider": "com.chopin.pilot.ime",
-    "hud_package": "com.chopin.pilot"
+    "package": "com.sextant.pilot",
+    "a11y": "com.sextant.pilot/.hud.RemoteA11yService",
+    "a11y_compat": "com.sextant.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService",
+    "ime_service": "com.sextant.pilot/.ime.RemoteImeService",
+    "ime_provider": "com.sextant.pilot.ime",
+    "hud_package": "com.sextant.pilot"
   },
   "keepalive": {
     "interval_sec": 15,
@@ -658,7 +677,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
   },
   "unlock": { "credential_file": "config/unlock-secret", "sim_pin_file": "config/sim-pin", "attempts": 1, "cooldown_sec": 30, "auto_on_boot": true },
   "session": { "idle_sec": 900, "stale_sec": 180, "zombie_sec": 300, "reap_sec": 60, "heartbeat_sec": 60, "guard_stale_sec": 600, "roster_ban_sec": 900, "max_write_sessions": 2 },
-  "helper": { "socket": "@chopin-core-helper", "dex": "lib/helper.jar" },
+  "helper": { "socket": "@sextant-core-helper", "dex": "lib/helper.jar" },
   "scrcpy": { "jar": "lib/scrcpy-server.jar", "max_size": 1280, "bit_rate": 4000000, "max_fps": 30, "stream_max_viewers": 3 },
   "audit": { "max_bytes": 1048576, "keep_days": 30 },
   "limits": { "max_body_bytes": 1048576, "request_timeout_sec": 1800 },
@@ -671,16 +690,16 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 - 字段校验在启动时做：未知字段报错（不静默忽略）、数值越界回落到文档声明的最小值并记 WARN（`interval_sec` 最小 10）、`ime_service`/`ime_provider`/`a11y`/`a11y_compat` 必须能被设备上真实存在解析。
 - `human.enabled=false` 时注入完全确定性（不给抖动、不加间隔），用于基准测试与 A/B 对照；默认 true。
 - `challenge.cooldown_sec` 是命中验证码后不再自动操作该包的时长；`risk_days` 是 `state/risk.json` 记录衰减天数。
-- `data_dir` 是模块固定属性，不放进配置的可改项（见 `modules/chopin-core/README.md`）。
-- 运行时配置在 `/data/adb/chopin-core/config/core.json`；升级不覆盖用户改动。
+- `data_dir` 是模块固定属性，不放进配置的可改项（见 `modules/sextant-core/README.md`）。
+- 运行时配置在 `/data/adb/sextant-core/config/core.json`；升级不覆盖用户改动。
 
 ---
 
 ## 8. HTTP API 合同
 
 - 全部能力在 `/v1` 下；统一错误信封 `{"error":{"code","message","detail"}}`。
-- 通用响应头：`X-Chopin-Schema: 1`、`X-Chopin-Request-Id`。
-- 鉴权：`Authorization: Bearer <api-token>`；写操作额外 `X-Chopin-Session: <session-token>`（会话绑定的 display）。带有效 session 的业务请求更新会话活动时间；`/v1/sessions/{id}/heartbeat` 只续心跳，不算业务活动。
+- 通用响应头：`X-Sextant-Schema: 1`、`X-Sextant-Request-Id`。
+- 鉴权：`Authorization: Bearer <api-token>`；写操作额外 `X-Sextant-Session: <session-token>`（会话绑定的 display）。带有效 session 的业务请求更新会话活动时间；`/v1/sessions/{id}/heartbeat` 只续心跳，不算业务活动。
 - scope 校验：每个端点声明所需 scope（见 §6.2 D12 的 scope 集合）；缺 scope 返回 `403 forbidden_scope`。
 - 端点按 §5 能力矩阵分组实现；`GET /doc` 返回 OpenAPI 3.1，由代码里的路由表生成，不手写维护。**路由表是精确清单**。
 - 上界：请求体 ≤ 1 MiB；`/v1/ui/*` 与 `/v1/sessions` 超时按 `limits.request_timeout_sec`；SSE 连接有背压与断开检测；上传分片有上限。
@@ -710,10 +729,10 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
   "updated_at": "2026-11-16T19:00:00+08:00",
   "daemon": { "pid": 17161, "version": "3.0.0", "uptime_sec": 120, "state": "running" },
   "app": {
-    "package": "com.chopin.pilot",
+    "package": "com.sextant.pilot",
     "installed": true,
     "version_name": "3.0.0",
-    "a11y": { "state": "OK", "detail": "bound", "component": "com.chopin.pilot/com.chopin.pilot.hud.RemoteA11yService", "compat": "com.chopin.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService" },
+    "a11y": { "state": "OK", "detail": "bound", "component": "com.sextant.pilot/com.sextant.pilot.hud.RemoteA11yService", "compat": "com.sextant.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService" },
     "bg": { "autostart": "allow", "bgcontrol": "noRestrict", "doze": true, "ok": true },
     "perms": { "idle": "OK", "runtime": "OK" }
   },
@@ -733,16 +752,16 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 - 组成：`MainActivity`（状态页 + 解锁凭据录入）、HUD 无障碍服务、IME 服务、前台服务（订阅状态并保活 UI）。
 - **零 root**：不申请 KernelSU 授权、不执行 `su`、不拉起任何进程、不写 allowlist、不写 `enabled_accessibility_services`。
 - 状态页数据来自 `state/app/status.json`（守护 chown 到 app uid）；发布失败时显示「守护未发布状态」并给出守护是否在跑的判断依据（读 pid 文件失败即未跑）。
-- 凭据录入：值经 stdin 传给 `chopin-core ctl secret set-unlock`（ctl 由模块安装到 `/data/adb/ksu/bin`，通过 `su` 调用——这是 APK **唯一**的特权动作，且只写凭据不读回值）。
+- 凭据录入：值经 stdin 传给 `sextant-core ctl secret set-unlock`（ctl 由模块安装到 `/data/adb/ksu/bin`，通过 `su` 调用——这是 APK **唯一**的特权动作，且只写凭据不读回值）。
 
-  > 说明：这不违反 D21。D21 取消的是「给 APK 授予 root 以运行引擎」。凭据录入必须经 `su` 才能写到 root-only 路径；若要求 APK 完全不用 `su`，则凭据只能由 adb 录入，锁屏下不可达。当前选择：允许这一条 `su -c 'chopin-core ctl secret set-unlock'`，并且 ctl 只接受 `set-unlock`/`clear-unlock`/`status` 三个子命令用于此路径。
+  > 说明：这不违反 D21。D21 取消的是「给 APK 授予 root 以运行引擎」。凭据录入必须经 `su` 才能写到 root-only 路径；若要求 APK 完全不用 `su`，则凭据只能由 adb 录入，锁屏下不可达。当前选择：允许这一条 `su -c 'sextant-core ctl secret set-unlock'`，并且 ctl 只接受 `set-unlock`/`clear-unlock`/`status` 三个子命令用于此路径。
 
 - 前台服务只订阅状态与维持通知，不再守护引擎进程。
-- 包名 `com.chopin.pilot`；minSdk 29 / targetSdk 33；签名 keystore 在 `apps/pilot/build/keystore/`（ignored，升级必须复用）。
+- 包名 `com.sextant.pilot`；minSdk 29 / targetSdk 33；签名 keystore 在 `apps/pilot/build/keystore/`（ignored，升级必须复用）。
 
 ### 9.3 IME 合同
 
-- service：`com.chopin.pilot/.ime.RemoteImeService`；控制 provider authority：`com.chopin.pilot.ime`。**两者不是同一个字符串，必须分开配置**（混用会导致文字注入永远失败，已发生过的 bug）。
+- service：`com.sextant.pilot/.ime.RemoteImeService`；控制 provider authority：`com.sextant.pilot.ime`。**两者不是同一个字符串，必须分开配置**（混用会导致文字注入永远失败，已发生过的 bug）。
 - provider `call` 方法：`input`（`arg` = Base64 UTF-8 文本，`extras.clear`）、`clear`、`key`（Enter/Back 等）。
 - 返回值：`result ∈ VERIFIED|ACCEPTED_UNVERIFIED|REJECTED|COMMIT_OUTCOME_UNKNOWN|INPUT_SESSION_CHANGED|NO_INPUT_CONNECTION`。
 - provider 只接受调用 UID 0、2000 或自身 UID；其他抛 `SecurityException`。不记录输入文本，只记录长度/结果。
@@ -769,9 +788,9 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 ### 9.5 PC CLI（`apps/pc-cli`）
 
-- 安装：解压即用；`chopin pair --serial <adb-serial>` 完成配对，之后所有子命令直接可用。
-- 子命令覆盖 §5 全部能力组，与端点一一对应；`chopin doc` 导出 OpenAPI；`chopin acceptance` / `chopin journey` 跑真机验收并输出证据包。
-- token 存 `~/.chopin/config.json`（0600）；证书指纹在配对时 pin 并在每次请求校验。
+- 安装：解压即用；`sextant pair --serial <adb-serial>` 完成配对，之后所有子命令直接可用。
+- 子命令覆盖 §5 全部能力组，与端点一一对应；`sextant doc` 导出 OpenAPI；`sextant acceptance` / `sextant journey` 跑真机验收并输出证据包。
+- token 存 `~/.sextant/config.json`（0600）；证书指纹在配对时 pin 并在每次请求校验。
 - 不做业务判断，不做自动重试掩盖失败。
 
 ### 9.6 WebUI 与手机状态页
@@ -826,7 +845,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 ### 10.5 安全硬约束
 
-- 不 `pm uninstall` / `disable-user` 预装应用（唯一例外是本项目自己的 `com.chopin.*`）。
+- 不 `pm uninstall` / `disable-user` 预装应用（唯一例外是本项目自己的 `com.sextant.*`）。
 - 不刷写分区、不改 boot、不 relock BL。
 - 凭据不进 argv / 日志 / API / 审计（入库例外见 D26）。
 - 不提交 keystore / ADB key / keybox（公钥可提交）。
@@ -841,14 +860,14 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 | 切片 | 内容 | 真机验收 |
 |---|---|---|
 | **S0** 设计收口 | 本文件 + `TASKS.md` + 工作区收敛 | 文档链接无失效；`git status` 干净 |
-| **S1** 制品与宿主 | 模块 zip 含 daemon/helper/scrcpy/webui/APK；`service.sh` root 拉起守护；health/status/device、TLS、TokenStore、配对、status.json；APK 去 root | 刷 zip → 重启 → 守护 uid 0 `u:r:su:s0`；`chopin pair` → `health` → `status`；APK 状态页一致 |
+| **S1** 制品与宿主 | 模块 zip 含 daemon/helper/scrcpy/webui/APK；`service.sh` root 拉起守护；health/status/device、TLS、TokenStore、配对、status.json；APK 去 root | 刷 zip → 重启 → 守护 uid 0 `u:r:su:s0`；`sextant pair` → `health` → `status`；APK 状态页一致 |
 | **S2** 解锁 + 输入 + 截图 | device/*、input/*、ui/screenshot、ui/frame | 熄屏锁屏 → 自动解锁；tap 命中；中文 text 注入；截图非全黑 |
 | **S3** UI 感知与复合原语 | tree/ocr/find/wait/chain/color_probe/pixel_stats/panel_read/wait_result/events | 各端点返回真实结果；OCR bounds 正确；find 树优先、无则 OCR；events 连续 |
 | **S4** 会话/并行/虚拟屏/流 | sessions/roster/guard/displays/scrcpy/WebRTC/stats | 主屏+虚拟屏并行写；第三人被拒；虚拟屏截图；WebRTC answer |
 | **S5** 应用/设置/文件/信息 | apps/*、settings、props、components、watchdog、files、uploads、notifications、sms、location | 逐端点真机证据 |
 | **S6** 触发器/WebUI/HUD/IME | triggers、`/ui`、`/doc`、hud/*、IME 端到端 | 触发器按类触发并留 run；真实浏览器看到画面；HUD pause 拒注入、stop 释放全部；IME 中文落到输入框 |
 | **S7** 保活收口 | a11y/后台/权限组保活（Go 直调） | 清空 a11y 15s 恢复；杀进程恢复；UiAutomation 期间仍 bound；bg-ok=yes；重启自动就绪 |
-| **S8** PC CLI + 收尾 | chopin 全子命令、`chopin doc`、`acceptance`、`journey`；删死代码；静态门禁收敛 | build → 刷 zip → 重启 → 逐组跑完能力矩阵，输出证据包 |
+| **S8** PC CLI + 收尾 | sextant 全子命令、`sextant doc`、`acceptance`、`journey`；删死代码；静态门禁收敛 | build → 刷 zip → 重启 → 逐组跑完能力矩阵，输出证据包 |
 | **S9** 通话（2026-11-22 撤销，D34） | `/v1/call`、`/v1/call/end`、`/v1/call/audio`、InCallService、privileged 判定 | 历史：真拨真挂；录音能力诚实上报；特权安装后 `privileged=true` |
 | **S10** 日常设置 | `/v1/settings/daily` 12 项走系统服务并读回 | 逐项真实值；飞行模式链路切断记录在案 |
 | **S11** WebUI/手机页 | 五格 rail、活动行、同一套调色板、入口地址、图标 | 浏览器与手机页截图；对比度/触摸目标门禁；入口真实可读 |
@@ -856,8 +875,8 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 | **S13** 收尾视觉 | APK 图标、入口地址、ScrollView 布局修复 | `aapt2` 图标存在；真机 OCR 全页文字可见 |
 | **S14** 通话上行注入（2026-11-22 撤销，D34） | `incall_music_uplink` 48k 立体声、`--incall` 不碰扬声器 | 历史：真机 `getRoutedDevice()`；`speak --incall` 前后 speakerphone 不变 |
 | **S16** 低延迟观测 | helper 快帧 + JPEG、`frame` 字节、`observe` 组合、最近帧复用、2fps 缓存、HUD ACK、事件驱动 wait | 真机 P95：frame ≤400ms、observe ≤700ms、tap ≤150ms；acceptance/journey 不回归 |
-| **S17** 初始化与 skill | `chopin init`、`ctl secret set-sim`、动画基线还原、`/doc/skill` 与可安装包、`chopin skill` | 清空 tokens 后一条命令完成配对与凭据；skill 可下载并安装到 agent 目录 |
-| **S18** 通用 UI 原语（D29 P0） | observe 帧/act 事务/list/options/readback/page/wait_stable；events 修复；CLI 一致性；`chopin run` 配方 | 真机：一次 observe/act/list/options 可用；wait_stable 替代 sleep；events 有真实事件；只读流程可复现 |
+| **S17** 初始化与 skill | `sextant init`、`ctl secret set-sim`、动画基线还原、`/doc/skill` 与可安装包、`sextant skill` | 清空 tokens 后一条命令完成配对与凭据；skill 可下载并安装到 agent 目录 |
+| **S18** 通用 UI 原语（D29 P0） | observe 帧/act 事务/list/options/readback/page/wait_stable；events 修复；CLI 一致性；`sextant run` 配方 | 真机：一次 observe/act/list/options 可用；wait_stable 替代 sleep；events 有真实事件；只读流程可复现 |
 | **S19** 体验与可靠性（D29 P1） | 输入安全（回读/发送校验/键盘/危险按钮）、keep-awake、断点/进度、上下文裁剪、doctor/log | 长任务不熄屏、可恢复；发送前回读；大响应可裁剪 |
 | **S26** 会话活动信号与僵尸回收（D37） | 带 session 的业务请求续期；`zombie_sec` 300s；CLI 本地会话自动带 + heartbeat | 单测活动/僵尸；真机只心跳不操作被回收锁屏、持续操作不被回收；acceptance/journey 不回归 |
 | **S25** 任务收尾与屏幕联动（D36） | `finishTask`：release/reap/HUD stop/断连锁屏、IME/keep-awake 收尾；`stale_sec` 180s | 单测 stale 判定；真机 release 与异常回收后锁屏；acceptance/journey 不回归 |
@@ -865,7 +884,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 | **S20** 深度能力（D29 P2 / D33） | 增量树 diff、内存 metrics、页面指纹/版本与地图/配方漂移 | 真机：metrics 计数增长、diff 正反例、地图漂移告警；acceptance/journey 不回归 |
 | **S21** 拟人操作与验证码分流（D30） | 种子化落点/节奏/限速；challenge 分类与滑块自解；risk 记录；handover 接管与注入拦截 | 同 seed 两次 run 完全一致；10 次 tap 间隔落在配置区间；滑块页可自解或结构化失败；短信验证码页 handover 后注入全 409 |
 | **S22** App 地图层（D31） | 地图模型/识别/操作目录/相对宏/回放/爬取/bench；`map_*` CLI 与 recipe `map_nav` | 真实设备夹具单测；设置地图 ≥4 屏；NAV 精确落点 ≥2/3；无线电状态还原；`map nav` 与 `run` 可复现 |
-| **S23** agent 引导入口（D32） | `/doc` 的 `x-chopin-guidance`（install/use 步骤）与 SKILL.md「从零安装」 | 单测锁定字段与阶段；真机 `/doc` 与 `/doc/skill` 内容一致 |
+| **S23** agent 引导入口（D32） | `/doc` 的 `x-sextant-guidance`（install/use 步骤）与 SKILL.md「从零安装」 | 单测锁定字段与阶段；真机 `/doc` 与 `/doc/skill` 内容一致 |
 
 ### 11.1 每切片完成标准
 
@@ -886,8 +905,8 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 ### 11.3 设备验收
 
 - `tools/scripts/device-acceptance.sh`：转发到 PC CLI，输出证据包 `out/device-acceptance-<ts>/`。
-- `chopin acceptance --serial <adb>`：从 PC 侧跑能力矩阵并同样留证据。
-- `chopin journey`：按使用流程跑 20 步，每步三条规则同时成立。
+- `sextant acceptance --serial <adb>`：从 PC 侧跑能力矩阵并同样留证据。
+- `sextant journey`：按使用流程跑 20 步，每步三条规则同时成立。
 - 锁屏、未启动、权限缺失等环境态必须如实标 skip 并写原因，不得报 FAIL 也不得报 PASS。
 
 ---
@@ -902,7 +921,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 | UiAutomation 再次解绑 a11y | 保活永远修不好 | 契约断言 + 真机验收项（S7） |
 | 锁屏/CE 行为与预期不符 | 无人值守失败 | D14 三条硬约束 + 锁屏态如实 skip |
 | scrcpy-server 二进制不在 Git | 构建失败 | 构建脚本给出获取方式；外部研究目录保留参考 |
-| 自签证书 pin 轮换 | PC 连不上 | 配对材料带指纹；`chopin pair --refresh-cert` 重新 pin |
+| 自签证书 pin 轮换 | PC 连不上 | 配对材料带指纹；`sextant pair --refresh-cert` 重新 pin |
 | 守护被 MIUI 杀 | 能力中断 | flock 单实例 + oom_score_adj + 状态 heartbeat；不双开 |
 | 两个模块 APK 签名/升级 | 升级失败 | 保留 keystore；签名不匹配先卸载再装 |
 | root binder 被 SELinux/MIUI 挡 | 通知/a11y/SMS/定位不可用 | 真机 spike；按 ROM 找替代路径；失败阻塞，不降级 |
@@ -916,6 +935,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 | 日期 | 变更 | 证据/备注 |
 |---|---|---|
+| 2026-11-23 | **新增 D38：Sextant 全量技术改名与迁移** | 用户决策；CLI/模块/APK/状态目录/请求头统一为 sextant-*；旧 APK 数据丢失已确认；不保留双身份 |
 | 2026-11-22 | **新增 D37：会话活动信号与僵尸回收** | 用户决策；心跳在但无操作 5 分钟释放并锁屏；CLI 本地会话自动带 |
 | 2026-11-22 | **新增 D36：任务收尾锁屏与异常 180s 回收** | 用户决策；无任务不常亮、结束/异常收尾 |
 | 2026-11-22 | **新增 D35：会话后台回收** | 用户决策；对齐 phone-hub keeper 的自动收工语义；`linger_sec` 因配置兼容保留 |
@@ -938,14 +958,14 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 ## 验收门禁
 
-`chopin acceptance` 只回答「端点能不能应答」，不足以保证「功能对不对」——这套代码里真实
+`sextant acceptance` 只回答「端点能不能应答」，不足以保证「功能对不对」——这套代码里真实
 发生过「返回 `ok:true` 但什么也没做」（`--clear`）、「有实现有单测但生产代码零调用」
 （`ime.Restore`）、「返回 200 但发错了键值」（`global home` 发的是 `KEYCODE_MOVE_END`）。
 
 因此验收分两层，判定规则见 [`docs/ACCEPTANCE.md`](ACCEPTANCE.md)：
 
-- **能力矩阵** `chopin acceptance`：端点级自洽性；
-- **使用流程** `chopin journey`：20 步，每步都必须同时满足「像用户那样操作」「换一条通道复核」
+- **能力矩阵** `sextant acceptance`：端点级自洽性；
+- **使用流程** `sextant journey`：20 步，每步都必须同时满足「像用户那样操作」「换一条通道复核」
   「审计日志确认预期路径真的跑了」三条。
 
 一个能力算 PASS 的前提是三条同时成立；SKIP 永远不算 PASS；不许用 `sleep` 当同步；
