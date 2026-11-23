@@ -1,7 +1,7 @@
 # 工作区说明（WORKSPACE）
 
 > 状态：**远控专用工作区**（2026-11-18 收敛）
-> 当前方向：设备端单制品 —— KernelSU 模块以 root 拉起唯一 Go 守护（DESIGN D20–D34）
+> 当前方向：设备端单制品 —— KernelSU 模块以 root 拉起唯一 Go 守护（DESIGN D20–D37）
 > 本机工作区：`/root/chopin-ksu`
 > 外部研究资料：`/root/chopin-research/`（不纳入 Git，不是产品真源）
 

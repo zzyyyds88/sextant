@@ -10,7 +10,7 @@
 | 项 | 值 |
 |---|---|
 | 项目 | `chopin-ksu`——只负责远控；不维护其他 KSU 模块、不做 ROM 移植/镜像 |
-| 设计真源 | `docs/DESIGN.md`（D6–D34；D20–D34 为当前形态） |
+| 设计真源 | `docs/DESIGN.md`（D6–D37；D20–D37 为当前形态） |
 | 任务状态 | `docs/TASKS.md`（状态与真机验收记录，不是设计真源） |
 | 验收规则 | `docs/ACCEPTANCE.md`（三条判定：像用户操作、换通道复核、读审计日志） |
 | Owner | 设备端特权语义唯一 owner：`modules/chopin-core/src`（Go 守护） |
