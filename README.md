@@ -92,7 +92,8 @@ curl -k https://<手机IP>:8443/doc/skill           # agent 操作手册
 
 ```bash
 sextant skill --install ~/.sextant/skills/sextant-remote   # 存 skill
-install -m 0600 /dev/null ~/.sextant/agent-token           # 存 token（内容由 agent 写入）
+# 配对得到 token 后写入 0600 文件（不要在终端 echo）：
+# ( umask 077; read -r -s T; printf '%s' "$T" > ~/.sextant/agent-token )
 ```
 
 token 只交给本地 0600 文件或 HTTP 客户端，不写日志、不发到聊天里。设备重置、模块重装或证书变化导致 401 / pin 失败时，才需要重新配对并覆盖本地 token。
