@@ -17,6 +17,8 @@ func (s *Server) routes() *http.ServeMux {
 
 	mux.HandleFunc("GET /v1/health", s.handleHealth)
 	mux.HandleFunc("GET /doc", s.handleDoc)
+	mux.HandleFunc("GET /doc/openapi.json", s.handleDocJSON)
+	mux.HandleFunc("GET /openapi.json", s.handleDocJSON)
 	mux.HandleFunc("GET /doc/skill", s.handleSkill)
 	mux.HandleFunc("GET /doc/skill.zip", s.handleSkillZip)
 	// Browsers request /favicon.ico on their own; answering it keeps the console

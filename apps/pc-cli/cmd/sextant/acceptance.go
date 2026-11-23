@@ -905,7 +905,8 @@ func cmdAcceptance(a *args) error {
 		return fmt.Sprintf("%d display(s)", d.Count), nil
 	})
 	run("control", "openapi document", func() (string, error) {
-		data, err := c.Get("/doc")
+		// /doc is HTML now (D39); the acceptance check needs the JSON contract.
+		data, err := c.Get("/doc/openapi.json")
 		if err != nil {
 			return "", err
 		}
@@ -1035,8 +1036,16 @@ func waitUnlocked(c *client.Client, timeout time.Duration) (lockStateView, error
 // The daemon refuses a second unlock within its cooldown window on purpose (a
 // wrong pattern must not be retried immediately). A test harness that treats that
 // refusal as a capability failure is measuring its own impatience.
+// unlockTolerant asks the daemon to unlock, waiting out its cooldown.
+//
+// A cooldown response is not a failed attempt: the daemon refuses by design for
+// unlock.cooldown_sec after any attempt, and the acceptance run may have just
+// unlocked during warm-up. Counting each cooldown reply as an attempt exhausted
+// the budget while the last one was 154ms from expiring. Bound the total wait
+// instead, so the loop stops on time rather than on a fixed attempt count.
 func unlockTolerant(c *client.Client) error {
-	for attempt := 0; attempt < 3; attempt++ {
+	deadline := time.Now().Add(90 * time.Second)
+	for {
 		resp, err := c.Post("/v1/device/unlock", map[string]any{})
 		if err == nil {
 			var r struct {
@@ -1063,10 +1072,12 @@ func unlockTolerant(c *client.Client) error {
 				}
 			}
 		}
+		if time.Now().Add(wait).After(deadline) {
+			return fmt.Errorf("unlock still refused after waiting out the cooldown")
+		}
 		fmt.Printf("note: unlock is cooling down; waiting %s\n", wait.Round(time.Second))
 		time.Sleep(wait)
 	}
-	return fmt.Errorf("unlock still refused after waiting out the cooldown")
 }
 
 // sseOpens verifies a stream endpoint answers with event-stream and stays open.

@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -8,12 +11,12 @@ import (
 // The document must describe the address the caller actually reached, not the
 // listener's wildcard bind: "https://0.0.0.0:8443" is not connectable.
 func TestOpenAPIDocumentUsesCallerHost(t *testing.T) {
-	doc := openAPIDocument("<device-host>:8443")
+	doc := openAPIDocument("sextant-device:8443")
 	servers, ok := doc["servers"].([]map[string]any)
 	if !ok || len(servers) != 1 {
 		t.Fatalf("servers = %#v, want exactly one entry", doc["servers"])
 	}
-	if got, want := servers[0]["url"], "https://<device-host>:8443"; got != want {
+	if got, want := servers[0]["url"], "https://sextant-device:8443"; got != want {
 		t.Fatalf("servers[0].url = %v, want %v", got, want)
 	}
 }
@@ -113,5 +116,118 @@ func TestGuidanceCoversInstallAndUse(t *testing.T) {
 	}
 	if !phases["install"] || !phases["use"] {
 		t.Fatalf("both phases must be present: %#v", phases)
+	}
+}
+
+// /doc is what a human opens in a browser and what an agent's first fetch
+// lands on. It must be a complete page, not the raw JSON document, and it must
+// describe the address the caller actually used.
+func TestDocServesHTMLForBrowsers(t *testing.T) {
+	s := &Server{}
+	req := httptest.NewRequest("GET", "https://sextant-device:8443/doc", nil)
+	req.Host = "sextant-device:8443"
+	rec := httptest.NewRecorder()
+	s.handleDoc(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Fatalf("Content-Type = %q, want text/html", ct)
+	}
+	body := rec.Body.String()
+	for _, want := range []string{
+		"<!doctype html>",
+		"https://sextant-device:8443",
+		"/doc/openapi.json",
+		"/v1/ui/act",
+		"/v1/status",
+		"Authorization: Bearer",
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("page is missing %q", want)
+		}
+	}
+	if strings.Contains(body, `"openapi"`) {
+		t.Fatal("page fell back to the raw OpenAPI JSON")
+	}
+}
+
+// The machine contract stays reachable at the same address for clients that ask
+// for JSON explicitly; the two representations must not drift.
+func TestDocServesJSONWhenAsked(t *testing.T) {
+	s := &Server{}
+	for _, tc := range []struct {
+		name   string
+		target string
+		accept string
+	}{
+		{"accept header", "/doc", "application/json"},
+		{"format query", "/doc?format=json", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", tc.target, nil)
+			req.Host = "host:8443"
+			if tc.accept != "" {
+				req.Header.Set("Accept", tc.accept)
+			}
+			rec := httptest.NewRecorder()
+			s.handleDoc(rec, req)
+			if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+				t.Fatalf("Content-Type = %q, want application/json", ct)
+			}
+			if !strings.Contains(rec.Body.String(), `"openapi"`) {
+				t.Fatal("JSON request did not receive the OpenAPI document")
+			}
+		})
+	}
+}
+
+// /doc/openapi.json and /openapi.json are the stable machine entry points; they
+// must serve the same document as the negotiated /doc.
+func TestDocJSONAliasesServeTheSameDocument(t *testing.T) {
+	s := &Server{}
+	want := openAPIDocument("host:8443")
+	for _, path := range []string{"/doc/openapi.json", "/openapi.json"} {
+		req := httptest.NewRequest("GET", path, nil)
+		req.Host = "host:8443"
+		rec := httptest.NewRecorder()
+		s.handleDocJSON(rec, req)
+		if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+			t.Fatalf("%s Content-Type = %q", path, ct)
+		}
+		var got map[string]any
+		if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+			t.Fatalf("%s is not JSON: %v", path, err)
+		}
+		if got["openapi"] != want["openapi"] {
+			t.Fatalf("%s openapi = %v, want %v", path, got["openapi"], want["openapi"])
+		}
+	}
+}
+
+// Every documented endpoint must land in exactly one group of the page; an
+// ungrouped path would silently disappear from the only human-facing index.
+func TestDocGroupsCoverEveryDocumentedPath(t *testing.T) {
+	seen := map[string]bool{}
+	for _, g := range buildDocGroups() {
+		for _, e := range g.Endpoints {
+			key := e.Method + " " + e.Path
+			if seen[key] {
+				t.Fatalf("%s is listed twice", key)
+			}
+			seen[key] = true
+			if e.Auth == "" {
+				t.Fatalf("%s has no auth label", key)
+			}
+		}
+	}
+	for path, methods := range apiPaths {
+		for method := range methods {
+			key := strings.ToUpper(method) + " " + path
+			if !seen[key] {
+				t.Fatalf("%s is documented but missing from the page", key)
+			}
+		}
 	}
 }

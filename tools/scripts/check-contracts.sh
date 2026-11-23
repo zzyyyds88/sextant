@@ -75,7 +75,7 @@ ROUTES="$MOD/src/internal/engine/routes.go"
 DOC="$MOD/src/internal/engine/doc.go"
 # Routes are registered as "<METHOD> <path>", so match the path without a leading
 # quote; the document map has the bare quoted path.
-for path in /doc /v1/status /v1/device /v1/device/lock-state /v1/device/unlock-local \
+for path in /doc /doc/openapi.json /openapi.json /v1/status /v1/device /v1/device/lock-state /v1/device/unlock-local \
             /v1/input/tap /v1/input/text /v1/ui/screenshot /v1/ui/observe /v1/ui/act \
             /v1/ui/list /v1/ui/options /v1/ui/readback /v1/ui/wait_stable /v1/ui/page /v1/ui/tree \
             /v1/ui/diff \

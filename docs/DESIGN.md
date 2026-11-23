@@ -541,6 +541,19 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 - 验收：静态门禁；模块 zip 内只有 `sextant-core` 身份；设备上 `ksud module list` 只有 `sextant-core`、`pm list packages` 只有 `com.sextant.pilot`、无旧 symlink/旧进程；a11y 与 compat 都 `hasBound=true`；IME 三字段正确；`sextant health/status/acceptance/journey` 通过；审计路径与请求头为新名；迁移前备份可恢复。
 - 风险：迁移是破坏性操作，旧 APK 数据不可恢复；旧模块卸载脚本可能删除旧状态，所以必须先备份再卸载；新 TLS 证书会改变 pin，必须重新配对；迁移失败时用备份恢复旧模块/APK并重启。
 
+#### D39：`/doc` 人机双入口与 agent 本地缓存（2026-11-23）
+
+- 背景：`/doc` 之前只返回 OpenAPI JSON，浏览器打开是裸 JSON，人无法直接读；agent 每次接入又重复读文档、重复配对，没有“首次初始化后把 skill 与 token 留在本地、下次直接用”的约定。
+- 决策：
+  1. **`GET /doc` 默认返回 HTML 说明页**：基础约定、鉴权与配对、最小调用流程、按能力分组的端点表（方法/路径/鉴权/说明）、常见错误、相关入口。端点表由 `apiPaths` 路由表生成，不手写第二份清单；页面随守护二进制发布。
+  2. **机器合同固定为 `GET /doc/openapi.json`**，短别名 `GET /openapi.json`。`GET /doc` 在 `Accept: application/json` 或 `?format=json` 时仍返回同一 OpenAPI，兼容既有客户端。
+  3. 两个 JSON 入口与 `/doc` 一样公开只读；`apiPaths`、`publicOperations` 同步登记，`check-contracts.sh` 锁定路由与文档覆盖。
+  4. HTML 页响应头固定：`Content-Type: text/html; charset=utf-8`、`Cache-Control: no-store`、`X-Content-Type-Options: nosniff`、`X-Frame-Options: DENY`、`Referrer-Policy: no-referrer`、CSP `default-src 'none'; style-src 'unsafe-inline'`；不加载外部资源。
+  5. **agent 本地缓存**：首次按 `/doc` / `/doc/skill` 完成配对，把 skill 与 token 存到本地（token 文件 0600，不进日志、不进回复、不进 argv），之后每次直接读本地 skill + token 调用 `/v1/*`，不重复初始化、不重复抓文档；只有设备重置、模块重装或证书变化导致 401 / pin 失败时才重新配对。
+  6. APK 状态页与 README 的“发给 agent 的一句话”统一指向 `/doc`，并写明缓存本地 skill/token、下次免初始化。
+- 非目标：不做在线 API 调试器（不引入页面 JS、表单提交或请求转发）、不引入外部 CSS/字体/CDN、不改变 `/v1/*` 合同、不新增第二套端点清单或第二套引导文案。
+- 验收：`curl -k /doc` 返回 HTML 且含端点表与鉴权说明；`/doc/openapi.json`、`/openapi.json` 返回 OpenAPI 3.1；`Accept: application/json` 仍拿到 JSON；单测覆盖 HTML/JSON 协商、两个别名、每个 `apiPaths` 条目在页面分组中恰好出现一次；真机 `curl` 与浏览器截图。
+
 ### 6.2 仍然有效的早期决策
 
 > 说明：以下 6.2 中仍有效的早期决策保留其历史命名；D38 已把当前技术标识统一改为 `sextant-*`，行为不变。
@@ -701,10 +714,10 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 - 通用响应头：`X-Sextant-Schema: 1`、`X-Sextant-Request-Id`。
 - 鉴权：`Authorization: Bearer <api-token>`；写操作额外 `X-Sextant-Session: <session-token>`（会话绑定的 display）。带有效 session 的业务请求更新会话活动时间；`/v1/sessions/{id}/heartbeat` 只续心跳，不算业务活动。
 - scope 校验：每个端点声明所需 scope（见 §6.2 D12 的 scope 集合）；缺 scope 返回 `403 forbidden_scope`。
-- 端点按 §5 能力矩阵分组实现；`GET /doc` 返回 OpenAPI 3.1，由代码里的路由表生成，不手写维护。**路由表是精确清单**。
+- 端点按 §5 能力矩阵分组实现；`GET /doc` 返回 HTML 说明页，`GET /doc/openapi.json`（别名 `GET /openapi.json`）返回 OpenAPI 3.1；两者都由代码里的路由表生成，不手写维护。**路由表是精确清单**。
 - 上界：请求体 ≤ 1 MiB；`/v1/ui/*` 与 `/v1/sessions` 超时按 `limits.request_timeout_sec`；SSE 连接有背压与断开检测；上传分片有上限。
 - 危险操作按 D13 二次确认。
-- `/v1/health`、`/doc`、`/doc/skill`、`/doc/skill.zip` 公开只读（TLS 下）；其余全部需要 token。
+- `/v1/health`、`/doc`、`/doc/openapi.json`、`/openapi.json`、`/doc/skill`、`/doc/skill.zip` 公开只读（TLS 下）；其余全部需要 token。
 - `/v1/ui/frame` 返回 `image/jpeg` 字节（不是 JSON），错误仍用统一错误信封；`/v1/ui/screenshot` 返回 JSON 元数据。
 - `/v1/ui/observe` 一次截帧，按 `tree`/`ocr`/`pixels`/`frame` 选择返回同一帧的结果，并附 `frame_id` 与 `timings`；树节点带 D29 的三态属性与 `node_id`/`parent_id`。
 - `/v1/ui/act` 返回 `dispatched`/`channel`/`clicked_bounds`/`observed`/`verified`/`failure`；不自动重试，`unknown` 不冒充成功。
@@ -935,6 +948,7 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 
 | 日期 | 变更 | 证据/备注 |
 |---|---|---|
+| 2026-11-23 | **新增 D39：`/doc` HTML 说明页与 agent 本地缓存** | 用户要求独立文档界面；HTML 由路由表生成，JSON 固定 `/doc/openapi.json`；agent 首次配对后本地缓存 skill/token |
 | 2026-11-23 | **新增 D38：Sextant 全量技术改名与迁移** | 用户决策；CLI/模块/APK/状态目录/请求头统一为 sextant-*；旧 APK 数据丢失已确认；不保留双身份 |
 | 2026-11-22 | **新增 D37：会话活动信号与僵尸回收** | 用户决策；心跳在但无操作 5 分钟释放并锁屏；CLI 本地会话自动带 |
 | 2026-11-22 | **新增 D36：任务收尾锁屏与异常 180s 回收** | 用户决策；无任务不常亮、结束/异常收尾 |

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"net/http"
+	"strings"
 
 	"sextant-core/internal/httpx"
 )
@@ -9,7 +10,9 @@ import (
 // apiPaths is the single source for the OpenAPI document. Adding a route means
 // adding it here too; check-contracts asserts the two agree.
 var apiPaths = map[string]map[string]string{
-	"/doc":                        {"get": "this document (public)"},
+	"/doc":                        {"get": "human-readable API guide (public)"},
+	"/doc/openapi.json":           {"get": "OpenAPI 3.1 document (public)"},
+	"/openapi.json":               {"get": "OpenAPI 3.1 document short alias (public)"},
 	"/doc/skill":                  {"get": "agent operation manual (public)"},
 	"/doc/skill.zip":              {"get": "agent operation manual as a skill package (public)"},
 	"/v1/health":                  {"get": "liveness, version, schema"},
@@ -127,9 +130,13 @@ var apiPaths = map[string]map[string]string{
 // with an empty requirement; otherwise the document claims a token is needed
 // where it is not. Keys are "<method> <path>", matching apiPaths.
 var publicOperations = map[string]bool{
-	"get /doc":       true,
-	"get /v1/health": true,
-	"post /v1/pair":  true,
+	"get /doc":              true,
+	"get /doc/openapi.json": true,
+	"get /openapi.json":     true,
+	"get /doc/skill":        true,
+	"get /doc/skill.zip":    true,
+	"get /v1/health":        true,
+	"post /v1/pair":         true,
 }
 
 // openAPIDocument builds the document for a caller that reached us at host.
@@ -246,12 +253,34 @@ func openAPIDocument(host string) map[string]any {
 	}
 }
 
-func (s *Server) handleDoc(w http.ResponseWriter, r *http.Request) {
+func (s *Server) docHost(r *http.Request) string {
 	host := r.Host
 	if host == "" {
 		// HTTP/1.0 without a Host header is the only way here; fall back to the
 		// configured listener rather than emitting an empty base URL.
 		host = s.Cfg.Listen
 	}
-	httpx.WriteJSON(w, http.StatusOK, openAPIDocument(host))
+	return host
+}
+
+// handleDoc serves the human-readable guide by default. Agents that need the
+// machine contract request /doc/openapi.json (or send Accept: application/json);
+// the old JSON-at-/doc contract is preserved for those callers.
+func (s *Server) handleDoc(w http.ResponseWriter, r *http.Request) {
+	host := s.docHost(r)
+	if r.URL.Query().Get("format") == "json" || strings.Contains(strings.ToLower(r.Header.Get("Accept")), "application/json") {
+		httpx.WriteJSON(w, http.StatusOK, openAPIDocument(host))
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'")
+	_, _ = w.Write(renderDocHTML(host))
+}
+
+func (s *Server) handleDocJSON(w http.ResponseWriter, r *http.Request) {
+	httpx.WriteJSON(w, http.StatusOK, openAPIDocument(s.docHost(r)))
 }

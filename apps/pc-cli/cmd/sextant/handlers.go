@@ -16,12 +16,15 @@ import (
 // Handlers for commands that need more than one API call or local work.
 
 // cmdDoc prints the OpenAPI document, optionally to a file.
+//
+// /doc itself is the human-readable HTML page (D39); the machine contract is the
+// JSON alias, so the CLI asks for that explicitly instead of negotiating.
 func cmdDoc(a *args) error {
 	c, err := paired()
 	if err != nil {
 		return err
 	}
-	data, err := c.Get("/doc")
+	data, err := c.Get("/doc/openapi.json")
 	if err != nil {
 		return err
 	}

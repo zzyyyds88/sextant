@@ -524,10 +524,10 @@ public final class MainActivity extends Activity {
      * the API from the CLI name.
      */
     private String agentPrompt(String host) {
-        return "打开 https://" + host + ":" + EnginePaths.PORT + "/doc 读取 OpenAPI 与鉴权说明；"
-                + "按 /doc 的 securitySchemes 完成 Bearer token 鉴权，"
-                + "然后用 /v1/ui/page、/v1/ui/tree、/v1/ui/observe 感知，"
-                + "用 /v1/ui/act、/v1/ui/readback 验证，结束 release 释放会话并锁屏。"
+        return "浏览器打开 https://" + host + ":" + EnginePaths.PORT + "/doc 说明页，按页面完成 Bearer token 鉴权；"
+                + "读 /doc/skill 后把 skill 与 token 存到本地（token 0600，不写日志、不回聊天），"
+                + "以后直接用本地缓存调用 /v1/*，不要重复初始化。"
+                + "感知用 page/tree/observe，操作用 act/list/readback 验证，结束 release 释放会话并锁屏。"
                 + "不要绕过 HUD，也不要把 SKIP 当 PASS。";
     }
 

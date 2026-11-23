@@ -34,7 +34,7 @@ adb reboot && adb wait-for-device
 没有内置默认 serial；用 `--serial` 或 `SEXTANT_SERIAL` 指定。守护监听
 `https://<host>:8443`，首次鉴权只走 adb（DESIGN D24）。
 
-`GET /doc` 的 `x-sextant-guidance` 是本节的机器可读版本，命令与期望结果一一对应。
+`GET /doc` 是给人看的说明页；`GET /doc/openapi.json` 的 `x-sextant-guidance` 是本节的机器可读版本，命令与期望结果一一对应。
 
 ## 1. 一条命令初始化
 
@@ -48,13 +48,33 @@ printf '%s\n' '<解锁图案>' | sextant init --serial <adb-serial>
 - 默认关闭窗口动画并把原值记录到 `state/baseline/animation.json`。
 - 撤销动画改动：`sextant init --restore`；保留动画：`--keep-animation`。
 
-## 2. 单独配对
+## 2. 单独配对与本地缓存
 
 ```bash
 sextant pair --serial <adb-serial> --agent pc
 ```
 
 token 与证书指纹保存在 `~/.sextant/config.json`（0600）。之后所有命令直接可用。
+
+没有 CLI 时（需要 adb 和 root，设备已开无线调试）：
+
+```bash
+# 1) 在设备上生成一次性码（5 分钟有效、只能用一次），输出最后一行是码
+adb -s <serial> shell su -c 'sextant-core ctl pair new --agent pc'
+
+# 2) 用码换 token；响应里的 server_cert_sha256 用于 pin
+curl -k -X POST -H 'Content-Type: application/json' \
+  -d '{"code":"<一次性码>","agent":"pc"}' https://<host>:8443/v1/pair
+```
+
+第一次接入的 agent 按这个顺序留好本地状态，之后不再初始化：
+
+1. 读 `GET /doc`（说明页）与 `GET /doc/skill`（本手册），把 skill 存到本地
+   （例如 `~/.sextant/skills/sextant-remote/SKILL.md`，或 `sextant skill --install <dir>`）。
+2. 用一次配对拿到的 token 存到 0600 文件（例如 `~/.sextant/agent-token`），
+   不进日志、不进回复、不进 argv。
+3. 后续任务只读本地 skill 与 token，直接调 `/v1/*`；不要重复读文档、重复配对。
+4. 只有设备重置、模块重装或证书变化导致 401 / pin 失败时，才重新配对并覆盖本地 token。
 
 ## 3. 感知屏幕
 
@@ -291,14 +311,16 @@ sextant settings                        # 日常设置逐项读回
 ## 8. HTTP 直接调用
 
 ```text
-GET  /doc                  OpenAPI 3.1（公开）
+GET  /doc                  HTML 说明页（公开）
+GET  /doc/openapi.json     OpenAPI 3.1（公开；/openapi.json 同内容）
 GET  /doc/skill            本手册（公开）
 POST /v1/ui/observe        {"tree":true,"frame":true}
 GET  /v1/ui/frame          image/jpeg 字节
 ```
 
-除 `/v1/health`、`/doc`、`/doc/skill`、`/doc/skill.zip` 外都要
-`Authorization: Bearer <token>`；写操作另加 `X-Sextant-Session`。
+除 `/v1/health`、`/doc`、`/doc/openapi.json`、`/openapi.json`、`/doc/skill`、
+`/doc/skill.zip` 外都要 `Authorization: Bearer <token>`；写操作另加
+`X-Sextant-Session`。
 
 ## 9. 验收自己
 
