@@ -154,8 +154,8 @@
 ```bash
 tools/scripts/run-all-static.sh
 HOME=$PWD/adbhome adb connect <adb-serial>
-chopin pair --serial <adb-serial>
-apps/pc-cli/dist/chopin-linux-amd64 acceptance
+sextant pair --serial <adb-serial>
+apps/pc-cli/dist/sextant-linux-amd64 acceptance
 ```
 
 停止条件：任何 FAIL 先复现并保留原文；SKIP 必须写明原因；不得把 SKIP 算成 PASS。
