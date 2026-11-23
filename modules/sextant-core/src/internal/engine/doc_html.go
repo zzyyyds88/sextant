@@ -79,10 +79,8 @@ func docAuth(path, method string) string {
 		return "HUD token（回环）"
 	case path == "/v1/device/unlock-local":
 		return "App token（回环）"
-	case method == "get":
-		return "Bearer"
 	default:
-		return "Bearer + 会话"
+		return "Bearer"
 	}
 }
 
@@ -155,7 +153,7 @@ footer{max-width:1100px;margin:0 auto;padding:0 20px 50px;color:var(--muted)}@me
 <section id="basics"><h2>1. 基础约定</h2><ul>
 <li>统一入口：<code>` + html.EscapeString(base) + `</code>。手机状态页显示同一地址；agent 用同主机的 <code>/doc</code>。</li>
 <li>鉴权：<code>/doc</code>、<code>/doc/skill</code>、<code>/doc/openapi.json</code>、<code>/v1/health</code>、<code>/v1/pair</code> 公开；其余 <code>/v1/*</code> 需要 <code>Authorization: Bearer &lt;token&gt;</code>。</li>
-<li>写操作通常再带 <code>X-Sextant-Session: &lt;session-token&gt;</code>；会话来自 <code>POST /v1/sessions</code>。</li>
+<li>写操作先 <code>POST /v1/sessions</code> claim（按 display 互斥），再带 <code>X-Sextant-Session: &lt;session-token&gt;</code>；HUD 暂停/停止期间注入会被拒绝。</li>
 <li>TLS 是设备自签证书。命令行用 <code>curl -k</code>；需要 pin 时用配对时观察到的证书 SHA-256（CLI 写入本地配置的 <code>cert_sha256</code>，也可用 <code>openssl s_client</code> 复核）。</li>
 <li>错误统一是 <code>{"error":{"code","message","detail"}}</code>；HTTP 200 只说明请求被处理，动作是否生效看响应字段和 readback。</li>
 </ul></section>
@@ -188,7 +186,7 @@ curl -k -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/
 
 # 4) 执行并验证；把响应里的 session token 放进 X-Sextant-Session
 curl -k -X POST -H "Authorization: Bearer $TOKEN" -H "X-Sextant-Session: $SESSION" \\
-  -H "Content-Type: application/json" -d '{"text":"WLAN","action":"click","expect":{"selected":true},"verify_ms":1500}' \\
+  -H "Content-Type: application/json" -d '{"target":{"text":"WLAN"},"action":"click","expect":{"selected":true},"verify_ms":1500}' \\
   ` + html.EscapeString(base) + `/v1/ui/act
 
 # 5) 收尾：释放会话并锁屏
@@ -213,12 +211,14 @@ curl -k -X DELETE -H "Authorization: Bearer $TOKEN" ` + html.EscapeString(base) 
 	b.WriteString(`<section id="errors"><h2>4. 常见错误</h2><table><thead><tr><th>code</th><th>含义</th><th>处理</th></tr></thead><tbody>
 <tr><td><code>session_conflict</code></td><td>同一块屏已有写会话</td><td>先 release 或换 display；不要抢写</td></tr>
 <tr><td><code>handed_over</code></td><td>人已暂停/接管</td><td>停止注入；等 <code>handover --return</code></td></tr>
-<tr><td><code>target_not_found</code> / <code>target_disabled</code></td><td>目标不存在或不可点</td><td>重新 page/tree，换节点或停止</td></tr>
-<tr><td><code>no_effect</code> / <code>verify_timeout</code></td><td>已注入但界面没达到预期</td><td>不要重复点；读 tree/OCR 后改路径</td></tr>
-<tr><td><code>offscreen</code></td><td>目标不在可视区域</td><td>滚动或换入口，不要盲点</td></tr>
+<tr><td><code>not_found</code></td><td>目标节点不存在</td><td>重新 page/tree，换节点或停止</td></tr>
+<tr><td><code>no_effect</code></td><td>act 的 <code>failure.code</code>：已注入但界面没达到预期</td><td>不要重复点；读 tree/OCR 后改路径</td></tr>
+<tr><td><code>timeout</code></td><td>动作或等待超时</td><td>缩小 <code>verify_ms</code>，先确认页面已稳定</td></tr>
+<tr><td><code>frame_not_found</code></td><td>diff 的帧已过期/不存在</td><td>重新 observe 取新 frame_id</td></tr>
 <tr><td><code>challenge_unresolved</code></td><td>滑块没解开</td><td>停止；交给 handover</td></tr>
 <tr><td><code>credential_missing</code></td><td>没有解锁凭据</td><td>由持机人录入，不要猜图案</td></tr>
-<tr><td><code>frame_not_found</code></td><td>diff 的帧已过期/不存在</td><td>重新 observe 取新 frame_id</td></tr>
+<tr><td><code>unauthorized</code> / <code>forbidden_scope</code></td><td>token 无效或范围不够</td><td>重新配对；不要伪造 token</td></tr>
+<tr><td><code>not_ready</code></td><td>锁屏/未解锁等状态暂不可用</td><td>等解锁后重试；不要把 pending 当成功</td></tr>
 <tr><td><code>unsupported</code></td><td>该 ROM/状态不提供此能力</td><td>如实上报，不要做只读兜底</td></tr>
 </tbody></table></section>
 <section id="links"><h2>5. 相关入口</h2><ul>
