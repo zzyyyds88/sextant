@@ -1,48 +1,132 @@
 # Sextant — 手机远控
 
-> 当前方向（DESIGN D20–D38）：**设备端单制品**。
-> KernelSU 模块 `sextant-core` 是唯一设备端交付物，开机以 root 直接拉起唯一 Go 守护进程；
-> 客户端 APK 零 root；电脑侧用 `sextant` 命令驱动。
-> 不刷镜像、不做 ROM 移植、不做源码级重建。
->
-> **本工作区只负责远控。** ROM/反编译/移植等研究资料在 `/root/chopin-research/`，不属于交付物；
-> 需要查证据时去那里看。
->
-> 命名：**Sextant** 是项目名；D38 决定全量技术改名：CLI `sextant`、模块 `sextant-core`、APK `com.sextant.pilot`。旧 `chopin-*` 标识迁移后删除，不保留别名。
+Sextant 让电脑上的 agent 通过 `sextant` CLI 操作一台 Android 手机：看屏、点击、输入、读回结果，人在手机上可以随时暂停或停止。设备端是一个 KernelSU 模块，客户端 APK 零 root。
 
-## 文档入口
+![Sextant Pilot 状态页](docs/assets/status-page.png)
 
-| 文档 | 作用 |
+## 把这句话发给 agent
+
+```text
+你通过 sextant CLI 控制一台 Android 手机：先运行 sextant doctor，再读 sextant skill；用 page/tree/observe 感知，用 act/list/readback 验证；长任务用 heartbeat，结束用 release 释放会话并锁屏；不要绕过 HUD，也不要把 SKIP 当 PASS。
+```
+
+完整手册在 `sextant skill`（或设备上的 `GET /doc/skill`）。上面这一句只负责把 agent 带进入口。
+
+## 初始化
+
+### 1. 准备
+
+- Android 13 + KernelSU 的设备，已开启开发者选项和 USB/无线 ADB。
+- 电脑能运行 `adb`。
+- 从 [Releases](https://github.com/zzyyyds88/sextant/releases/latest) 下载：
+  - `sextant-core.zip`：设备端模块，内含 APK
+  - `sextant-linux-amd64` 或 `sextant-windows-amd64.exe`：电脑侧 CLI
+
+当前真机基线是 Redmi Note 10 Pro 5G / POCO X3 GT（MIUI 14 / Android 13 / KernelSU 3.1.8）。其他 KernelSU 设备需要重新跑验收，不能直接认为兼容。
+
+### 2. 安装设备端模块
+
+```bash
+adb push sextant-core.zip /data/local/tmp/
+adb shell su -c 'ksud module install /data/local/tmp/sextant-core.zip'
+adb reboot
+adb wait-for-device
+```
+
+模块由 KernelSU 以 root 启动守护进程；APK 不申请 root，也不拉起引擎。重启一次是为了让模块和 priv-app overlay 生效。
+
+### 3. 安装 CLI
+
+Linux：
+
+```bash
+install -m 0755 sextant-linux-amd64 /usr/local/bin/sextant
+```
+
+Windows 把 `sextant-windows-amd64.exe` 放到 PATH 中，命令名仍是 `sextant`。
+
+如果 adb key 放在独立目录：
+
+```bash
+export SEXTANT_ADB_HOME="$HOME/.sextant-adb"
+```
+
+### 4. 配对并写入解锁凭据
+
+推荐一条命令完成：
+
+```bash
+printf '%s\n' '<解锁图案>' | sextant init --serial <adb-serial>
+```
+
+- 解锁图案只经 stdin，不进入 argv、日志或 API。
+- 需要 SIM PIN 时加 `--sim`，第二行输入 PIN。
+- 没有内置默认 serial；用 `--serial` 或 `SEXTANT_SERIAL` 指定。
+- 已配对时不需要重复签发 token。
+
+然后自检：
+
+```bash
+sextant doctor
+```
+
+8 项都 `ok` 后再使用。`doctor` 会检查配对、守护、a11y、后台、helper、前台页面等。
+
+### 5. 第一次看屏
+
+```bash
+sextant page                    # 前台包/组件/窗口/键盘/页面指纹
+sextant shot -o screen.jpg      # 截一张 JPEG
+sextant tree --summary          # 无障碍节点树摘要
+sextant observe --tree --frame  # 一次返回树和图片
+```
+
+## 日常使用
+
+一个最小任务：
+
+```bash
+sextant claim agent-a
+sextant page
+sextant act --text "WLAN" --action click --verify-ms 1500
+sextant readback "WLAN"
+sextant release <session-id>
+```
+
+- `claim` 返回 session id，并解锁屏幕；同一块屏幕只能有一个写会话。
+- `act` 必须看 `dispatched`、`verified`、`failure.code`；`verified=false` 就是没生效。
+- `readback` 用另一条通道确认结果，不要只信“命令返回 ok”。
+- `release` 释放会话并锁屏；本地会话同时删除。
+- 长任务用 `sextant heartbeat` 保活；业务操作会刷新活动时间，心跳只保活。默认 300 秒没有业务操作会被当作僵尸会话回收并锁屏。
+
+常用命令：
+
+| 目的 | 命令 |
 |---|---|
-| [`docs/DESIGN.md`](docs/DESIGN.md) | **唯一设计真源**：目标、owner 表、ADR D6–D38、配置/API/客户端合同、失败模式、切片与验收门禁 |
-| [`docs/TASKS.md`](docs/TASKS.md) | 任务切片状态与真机验收记录（状态，不是设计真源） |
-| [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) | 验收流程与判定规则：能力矩阵 + 使用流程 + 三条判定规则 |
-| [`docs/RELEASE.md`](docs/RELEASE.md) | 签名、校验和与发布检查清单 |
-| [`AGENTS.md`](AGENTS.md) | agent 协作宪法：真源优先级、推理闸、适配块、验收与 Git 规则 |
-| [`modules/sextant-core/README.md`](modules/sextant-core/README.md) | 设备端制品：安装、配置、ctl 子命令、排障 |
-| [`apps/pilot/README.md`](apps/pilot/README.md) | 客户端 APK：状态页 / HUD / IME（零 root） |
-| [`apps/pc-cli/README.md`](apps/pc-cli/README.md) | 电脑侧 `sextant` 命令：配对、健康检查、能力调用、验收 |
-| [`PRODUCT.md`](PRODUCT.md) | 产品语气、界面取舍与受众 |
-| [`WORKSPACE.md`](WORKSPACE.md) | 本机工作区与外部研究资料边界 |
+| 看当前页 | `sextant page`、`sextant tree --summary` |
+| 截图/OCR | `sextant shot`、`sextant ocr`、`sextant observe --tree --frame` |
+| 点击/输入 | `sextant act --text ... --action click\|select\|set_text` |
+| 找控件 | `sextant find "发送"`、`sextant list --text-contains ...` |
+| 等待 | `sextant wait "发送"`、`sextant wait-stable` |
+| 会话 | `sextant claim`、`sextant heartbeat`、`sextant release` |
+| 应用 | `sextant launch PKG`、`sextant stop PKG` |
+| 验证 | `sextant doctor`、`sextant acceptance`、`sextant journey` |
 
-## 交给 AI 使用
+## HUD 与人工接管
 
-AI 的入口是项目内的 agent 手册，不是这份 README：
+agent 执行 `claim` 后，手机上会出现 HUD。人可以随时：
 
-```bash
-sextant skill                    # 打印完整手册
-sextant skill --install DIR      # 安装到 agent 的 skills 目录
-sextant skill --zip -o skill.zip # 打包
-```
+- 暂停：注入端点返回 `409 handed_over` / paused，agent 不能继续操作；
+- 停止：释放所有会话，agent 需要重新 claim；
+- 在手机状态页查看守护、无障碍、后台和会话状态。
 
-未配对时也可以直接从设备读公开文档：
+agent 不应绕过 HUD；验证码或需要人工判断的页面用 `sextant handover` 交给手机前的人处理。
 
-```bash
-curl -k https://<device>:8443/doc/skill
-curl -k https://<device>:8443/doc
-```
+![HUD 正在操作设置页](docs/assets/hud-control.png)
 
-把下面这段直接交给 agent 作为启动提示词：
+## 给 agent 的完整启动提示词
+
+一句话版本已在上方；需要更细的步骤时，把下面这段也交给 agent：
 
 ```text
 你通过 sextant CLI 控制一台 Android 手机。按顺序工作：
@@ -55,137 +139,50 @@ curl -k https://<device>:8443/doc
 5. 不绕过 HUD/handover；不要把 SKIP 当 PASS；不要伪造成功。
 ```
 
-`claim` 会把本次会话写到 `~/.sextant/session.json`（0600），后续命令自动带
-`X-Sextant-Session`；`release` 删除。业务操作会刷新任务活动时间，心跳只保活；
-默认 300 秒无业务操作会被守护回收并锁屏。
+## 从旧版本迁移
 
-## 快速开始
-
-构建：
-
-```bash
-tools/scripts/build-core.sh                        # Go 守护 + ctl（同一 ELF，linux/arm64）
-apps/pilot/build.sh                                 # 客户端 APK
-apps/pc-cli/build.sh                                # PC CLI
-tools/scripts/build-module.sh modules/sextant-core   # → modules/sextant-core.zip
-```
-
-公开仓库不包含 `tools/go`、Android SDK、Kotlin、`scrcpy-server` 和已构建的模块 `lib/`。
-按脚本头设置 `GO`、`ANDROID_SDK_ROOT`、`ANDROID_BUILD_TOOLS`、`ANDROID_PLATFORM`、
-`KOTLINC`、`KOTLIN_STDLIB`；把 `scrcpy-server.jar` 放到 `apps/pilot/lib/`。
-`build-module.sh` 还要求本地 `modules/sextant-core/config/unlock-secret`（0600，不入库）。
-
-首次装机与配对（只在验证启动路径时重启）：
-
-```bash
-tools/scripts/install-device.sh
-sextant pair --serial <adb-serial>
-sextant health
-```
-
-没有内置默认 serial；用 `--serial` 或环境变量 `SEXTANT_SERIAL` 指定。
-
-从旧 `chopin-core` / `com.chopin.pilot` 安装迁移（破坏性，旧 APK 数据会丢失）：
+旧 `chopin-core` / `com.chopin.pilot` 设备用迁移脚本，不要直接覆盖安装：
 
 ```bash
 SERIAL=<adb-serial> CONFIRM=1 tools/scripts/migrate-to-sextant.sh
 ```
 
-脚本会先备份旧模块/状态/PC 配置，再移除旧身份、安装 Sextant 并重新配对。
+脚本会先备份旧模块、旧状态和 PC 配置，再卸旧 APK、移除旧模块、安装 Sextant 并重新配对。旧 APK 私有数据会丢失；守护状态会迁移。
 
-改完守护侧代码，不重启就生效：
-
-```bash
-tools/scripts/activate-device.sh
-```
-
-验收：
+## 从源码构建
 
 ```bash
-tools/scripts/run-all-static.sh   # 静态门禁（编译与契约，≤60 项）
-sextant acceptance                 # 端点级能力矩阵
-sextant journey                    # 用户流程，三条判定
+tools/scripts/build-core.sh
+tools/scripts/build-helper.sh
+apps/pilot/build.sh
+apps/pc-cli/build.sh
+tools/scripts/build-module.sh modules/sextant-core
 ```
 
-证据包落在 `out/acceptance-<ts>/REPORT.md` 与 `out/journey-<ts>/REPORT.md`；
-验收规则见 `docs/ACCEPTANCE.md`；真机验收证据保留在私有开发仓库。
-
-## 交付物
-
-| 产物 | 路径 | 说明 |
-|---|---|---|
-| 设备端模块 | `modules/sextant-core.zip` | 唯一交付给设备的东西：Go 守护 + ctl、root helper、scrcpy-server、WebUI、配置，以及它负责安装的 APK |
-| 客户端 APK | `apps/pilot/dist/sextant-pilot-<version>.apk` | 状态页 + HUD + IME；零 root |
-| 电脑侧 CLI | `apps/pc-cli/dist/sextant-linux-amd64`（Windows 为 `sextant-windows-amd64.exe`） | 配对、健康、能力调用、验收导出 |
+公开仓库不包含 `tools/go`、Android SDK、Kotlin、`scrcpy-server` 和已构建的模块 `lib/`。按脚本头设置 `GO`、`ANDROID_SDK_ROOT`、`ANDROID_BUILD_TOOLS`、`ANDROID_PLATFORM`、`KOTLINC`、`KOTLIN_STDLIB`；把 `scrcpy-server.jar` 放到 `apps/pilot/lib/`。`build-module.sh` 还要求本地 `modules/sextant-core/config/unlock-secret`（0600，不入库）。
 
 ## 安全与发布
 
-- 开发构建用 `apps/pilot/build/keystore/` 的本地自签名 key；发布使用仓库外的专用 release key（证书 SHA-256 `3bd6c103…`），升级必须复用同一 key。两者都不是公开 CA 身份。
-- 发布资产附 `SHA256SUMS` 与 GPG 分离签名；公钥见 [`docs/release-key.asc`](docs/release-key.asc)，指纹 `61D77E…`，验证命令见 [`docs/RELEASE.md`](docs/RELEASE.md)。
-- keystore、密码文件、含凭据的构建日志一律不发布、不提交。
-- 仓库不提交预构建 release；发布资产由维护者按 `docs/RELEASE.md` 生成。
-- 换 release key 首次升级需要卸载旧 APK 一次（丢 APK 数据，守护状态不受影响），见 `docs/RELEASE.md`。
+- 设备端模块由 KernelSU 以 root 启动；APK 零 root，只读守护发布的 `status.json`，唯一特权动作是经 stdin 写解锁凭据。
+- release APK 使用专用签名 key，证书 SHA-256 `3bd6c103…`；发布资产附 `SHA256SUMS` 与 GPG 分离签名，公钥见 [`docs/release-key.asc`](docs/release-key.asc)，验证步骤见 [`docs/RELEASE.md`](docs/RELEASE.md)。
+- keystore、密码、ADB key、解锁图案、SIM PIN 不入 Git、不发布、不打印。
+- 当前发布：[v4.0.0](https://github.com/zzyyyds88/sextant/releases/tag/v4.0.0)。
 
-## 参考设备
+## 文档
 
-当前实现与验收基线是 chopin（Redmi Note 10 Pro 5G / POCO X3 GT），MIUI 14 / Android 13，
-KernelSU 3.1.8。协议、模块结构与 CLI 可以迁移到其他 KernelSU 设备，但 a11y、IME、
-priv-app 安装和 MIUI 后台策略都是按这个 ROM 实测的；换设备必须重新跑
-`acceptance` 与 `journey`，不能直接宣称兼容。
-
-本仓库不包含设备序列号、ADB key 或运行时凭据；ADB 连接串使用
-`<adb-serial>` 占位，服务端口为 `8443`（TLS + Bearer token）。
-
-## 仓库目录
-
-```text
-sextant/
-├── docs/
-│   ├── DESIGN.md              # 唯一设计真源（D6–D38）
-│   ├── TASKS.md               # 切片状态 + 真机验收记录
-│   ├── ACCEPTANCE.md          # 验收流程与判定规则
-│   └── RELEASE.md             # 签名与发布检查清单
-├── modules/
-│   └── sextant-core/           # Go 守护 + ctl + helper + scrcpy + webui + 配置
-├── apps/
-│   ├── pilot/                 # 客户端 APK：状态页 + HUD + IME（零 root）
-│   └── pc-cli/                # 电脑侧 sextant 命令（Go）
-├── tools/
-│   ├── scripts/               # 构建 / 静态门禁 / 激活 / 装机 / 验收 / WebUI 检查
-│   ├── go/ android-sdk/ kotlin/   # 工具链（公开快照不含）
-│   ├── probe/                 # WebRTC 端到端探测器
-│   └── webui-check/           # /ui 无头浏览器检查
-└── adbhome/                   # 独立 HOME + 授权 adbkey（公开快照不含）
-```
-
-## 外部研究资料
-
-不在本仓库，固定在 `/root/chopin-research/`：
-
-| 路径 | 内容 |
+| 文档 | 内容 |
 |---|---|
-| `decompiled/` | JADX/APKTool 反编译树、索引、系统应用清单 |
-| `downloads/` | 官方 MIUI recovery ROM zip |
-| `extract/` | `payload.bin` 解包与分区镜像 |
-| `old/` | 旧设备/旧构建归档 |
-| `research/` | LineageOS、XMAPort、Shizuku、SukiSU allowlist、dsh-go、scrcpy、MIUI a11y 保活实证 |
-| `audit/` | 设备侧环境审计截图/XML |
-| `tools/` | JADX、magiskboot、APK 样本与反编译脚本 |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | 唯一设计真源、合同与决策 |
+| [`docs/ACCEPTANCE.md`](docs/ACCEPTANCE.md) | 验收流程与三条判定 |
+| [`docs/RELEASE.md`](docs/RELEASE.md) | 签名、校验和与发布检查 |
+| [`modules/sextant-core/README.md`](modules/sextant-core/README.md) | 模块安装、配置、ctl、排障 |
+| [`apps/pilot/README.md`](apps/pilot/README.md) | APK 状态页 / HUD / IME |
+| [`apps/pc-cli/README.md`](apps/pc-cli/README.md) | CLI 命令与配对 |
+| [`AGENTS.md`](AGENTS.md) | agent 协作规则 |
+| [`WORKSPACE.md`](WORKSPACE.md) | 开发工作区说明 |
 
-这些资料只用于查证据；静态反编译不等于运行时行为，ROM/移植结论也不作为本工作区的设计真源。
-
-## 设备侧
-
-- ADB 使用独立 HOME：
-
-  ```bash
-  HOME=<workspace>/adbhome adb -s <adb-serial> ...
-  ```
-
-- 模块运行时目录：`/data/adb/sextant-core/`（配置、状态、日志、凭据、基线）。
-- 模块 ctl：`/data/adb/ksu/bin/sextant-core`（KernelSU 把该目录放进 `su` 的 PATH）。
+开发机的 ROM/反编译研究资料在 `/root/chopin-research/`，不属于产品交付物；使用 Sextant 不需要它。
 
 ## 许可证
 
-本项目按 **AGPL-3.0-or-later** 发布，见 [`LICENSE`](LICENSE) 与 [`NOTICE`](NOTICE)。
-HUD、IME、scrcpy 与 vendored YAML 的第三方声明保留在各自目录。
+AGPL-3.0-or-later，见 [`LICENSE`](LICENSE) 与 [`NOTICE`](NOTICE)。第三方声明保留在 `apps/pilot/licenses/` 和 vendored YAML 目录。
