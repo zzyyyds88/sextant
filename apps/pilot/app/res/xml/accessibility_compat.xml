@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    兼容服务配置：能少则少。
+    - canRetrieveWindowContent=false：它不需要读任何东西；
+    - canPerformGestures=false：它不发手势；
+    - accessibilityEventTypes 仍保留 typeWindowStateChanged，因为留空时部分 ROM
+      干脆不绑定这个服务，而「被绑定」正是微信放行的前提。
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="false"
+    android:canPerformGestures="false"
+    android:notificationTimeout="1000"
+    android:description="@string/phone_a11y_compat_description"
+    android:isAccessibilityTool="false" />

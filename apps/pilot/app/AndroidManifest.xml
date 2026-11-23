@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.chopin.pilot">
+
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher">
+
+        <!-- 状态页：引擎状态、harness 授权状态、会话、启停。 -->
+        <!-- showWhenLocked/turnScreenOn: the unlock button is only useful while
+             the phone IS locked, so the status page has to be able to appear over
+             the keyguard. Without this the screen that unlocks the phone is
+             itself unreachable from the locked phone — the feature would only be
+             usable by a human who already unlocked it by hand. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 无界面入口：清本包 stopped 状态，让 MIUI 能绑定无障碍服务。 -->
+        <activity
+            android:name=".hud.RemoteLaunchActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- 前台服务：以 root 启动并守护 Go 引擎。 -->
+        <!-- Plain foreground service: targetSdk 33 does not require a type, and
+             declaring an API-34-only type (specialUse) risks rejection on the
+             Android 13 target device. -->
+        <service
+            android:name=".EngineService"
+            android:exported="false" />
+
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- HUD 叠加层：TYPE_ACCESSIBILITY_OVERLAY 不需要 SYSTEM_ALERT_WINDOW。 -->
+        <service
+            android:name=".hud.RemoteA11yService"
+            android:exported="true"
+            android:label="@string/phone_a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service" />
+        </service>
+
+        <!--
+            微信放行兼容服务：零功能，只为让一个「微信认得的组件名」被系统绑定。
+            真正读屏/操作的是上面的 .hud.RemoteA11yService，它不伪装。
+            两个都启用才有效果；只启用这一个时 App 的自有能力不受影响（它本来就不干活）。
+        -->
+        <service
+            android:name="com.google.android.accessibility.selecttospeak.SelectToSpeakService"
+            android:exported="true"
+            android:label="@string/phone_a11y_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_compat" />
+        </service>
+
+        <!-- 输入法：真实事件 → InputConnection 文字注入。 -->
+        <service
+            android:name=".ime.RemoteImeService"
+            android:exported="true"
+            android:label="@string/ime_label"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/input_method" />
+        </service>
+
+        <!-- 引擎 ↔ IME 的进程间控制面（root/shell 访问）。 -->
+        <provider
+            android:name=".ime.ImeControlProvider"
+            android:authorities="com.chopin.pilot.ime"
+            android:exported="true"
+            android:grantUriPermissions="false" />
+    </application>
+</manifest>

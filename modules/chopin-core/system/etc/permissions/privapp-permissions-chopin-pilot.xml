@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Privileged permissions for com.chopin.pilot.
+
+  The call capability was removed (D34), and it was the only source of
+  privileged permissions this app requested. The file stays because the module
+  install and the static gate expect it at this path; an app with no privileged
+  permission is still installable into /system/priv-app.
+-->
+<permissions>
+    <privapp-permissions package="com.chopin.pilot" />
+</permissions>

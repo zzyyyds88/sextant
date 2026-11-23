@@ -1,0 +1,16 @@
+chopin-priv-ime
+===============
+
+This IME is a Java port of the input implementation from Mobilerun Portal
+0.8.2, source commit 49d92110ed9faeaad4c8f65b681c4a3012b1de25:
+
+  https://github.com/droidrun/mobilerun-portal
+  app/src/main/java/com/mobilerun/portal/input/MobilerunKeyboardIME.kt
+  app/src/main/java/com/mobilerun/portal/input/InputConnectionTextEditor.kt
+
+Mobilerun Portal is Copyright (C) 2025 Niels Schmidt and is licensed under
+the GNU Affero General Public License, version 3 or later. See LICENSE.
+
+The chopin-priv module as a whole is distributed under AGPL-3.0. The
+corresponding source, including this IME, is shipped in the module source
+tree and can be rebuilt with module/chopin-priv/build.sh.

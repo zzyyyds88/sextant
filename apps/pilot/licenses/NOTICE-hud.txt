@@ -1,0 +1,25 @@
+chopin-priv-hud
+===============
+
+The HUD's status capsule and stop control implement the agent-control status
+surface documented by the dsh-go project:
+
+  https://github.com/ccch1mneyyy/dsh-go
+  docs/design/phone-overlay.md
+
+dsh-go's phone overlay is built around AccessibilityService
+TYPE_ACCESSIBILITY_OVERLAY windows. This HUD is a separate Java implementation
+for a module-owned SYSTEM_ALERT_WINDOW APK; it does not copy the dsh-go Flutter
+application, its accessibility service, or its window-management code.
+
+The following dsh-go files carry MIT notices for the design/source they derive
+from (Phase, Copyright (c) 2026 CikeSeven; Libraries.dev, Copyright (c) 2026
+Jakub Antalik):
+
+  app/android/app/src/main/kotlin/io/github/ccch1mneyyy/dsh_app/phone/a11y/ControlOverlay.kt
+  app/android/app/src/main/kotlin/io/github/ccch1mneyyy/dsh_app/phone/a11y/PhoneA11yService.kt
+  app/android/app/src/main/kotlin/io/github/ccch1mneyyy/dsh_app/phone/a11y/EdgeBeam.kt
+  app/android/app/src/main/kotlin/io/github/ccch1mneyyy/dsh_app/phone/a11y/EdgeBeamModel.kt
+
+Those MIT notices are retained here for attribution. The chopin-priv module as
+a whole, including this HUD, is distributed under AGPL-3.0; see LICENSE.

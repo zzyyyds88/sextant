@@ -1,0 +1,14 @@
+# Build outputs (reproduce with ./build.sh)
+/build/
+/dist/
+/helper/out/
+
+# Third-party binaries fetched at build time (see README)
+/lib/scrcpy-server-v4.1
+/lib/scrcpy-server.jar
+/lib/LICENSE-scrcpy.txt
+/lib/NOTICE-scrcpy.txt
+
+# Local signing material — must never be committed. Back it up separately:
+# an upgrade signed with a different key cannot install over this one.
+/build/keystore/

@@ -1,0 +1,4 @@
+# Test sandbox writes: recreated on every run.
+fakedev/state/
+fakedev/data/
+/bin/

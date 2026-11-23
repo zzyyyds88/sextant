@@ -1,0 +1,6 @@
+id=chopin-core
+name=Chopin Core
+version=3.0.0
+versionCode=300
+author=chopin-rom
+description=Chopin Core: the privileged device-side stack (root daemon, helper, scrcpy, WebUI) plus the zero-root Chopin Pilot APK it installs. Manifest-driven config, structured status, audited, fully reversible on uninstall.

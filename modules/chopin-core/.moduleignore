@@ -1,0 +1,8 @@
+# Paths that must not end up in the flashable zip.
+# Source trees and build leftovers are not runtime content: the zip is what the
+# device installs, and shipping a Go tree or javac output there is dead weight
+# that also confuses "which file am I editing" questions.
+src/
+tests/
+helper/
+.gitignore
