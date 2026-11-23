@@ -1,6 +1,9 @@
 package com.sextant.pilot;
 
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -61,6 +64,8 @@ public final class MainActivity extends Activity {
     private TextView chipState;
     private TextView webUiUrlView;
     private TextView webUiHintView;
+    private TextView docUrlView;
+    private TextView agentPromptView;
     private TextView unlockView;
     private TextView detailView;
     private Button webUiButton;
@@ -197,6 +202,31 @@ public final class MainActivity extends Activity {
         webUiHintView = UiKit.label(this, "");
         webUiHintView.setTextSize(11);
         root.addView(webUiHintView);
+
+        // The agent's entry is /doc, not the CLI. Show it next to the WebUI URL so
+        // a person can read it off the phone and paste it into a browser or an
+        // agent prompt without knowing the port or the API shape.
+        TextView docLabel = UiKit.label(this, "agent 从这里开始");
+        docLabel.setPadding(0, UiKit.dp(this, 12), 0, UiKit.dp(this, 2));
+        root.addView(docLabel);
+
+        docUrlView = UiKit.value(this, "https://<手机IP>:" + EnginePaths.PORT + "/doc",
+                UiKit.accent(this));
+        docUrlView.setTextSize(13);
+        docUrlView.setTextIsSelectable(true);
+        root.addView(docUrlView);
+
+        agentPromptView = UiKit.body(this, "");
+        agentPromptView.setTextSize(12);
+        agentPromptView.setTextIsSelectable(true);
+        agentPromptView.setPadding(0, UiKit.dp(this, 4), 0, 0);
+        root.addView(agentPromptView);
+
+        Button copyAgentButton = new Button(this);
+        copyAgentButton.setText("复制 agent 接入说明");
+        copyAgentButton.setOnClickListener(v -> copyAgentPrompt());
+        root.addView(copyAgentButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         webUiButton = new Button(this);
         webUiButton.setText("在本机打开");
@@ -462,6 +492,9 @@ public final class MainActivity extends Activity {
         String lan = lanAddress();
         webUiUrlView.setText("https://" + (lan.isEmpty() ? "<手机IP>" : lan)
                 + ":" + EnginePaths.PORT + EnginePaths.WEBUI_PATH);
+        String host = lan.isEmpty() ? "<手机IP>" : lan;
+        docUrlView.setText("https://" + host + ":" + EnginePaths.PORT + "/doc");
+        agentPromptView.setText(agentPrompt(host));
         if (lan.isEmpty()) {
             webUiHintView.setText("没有连上 Wi-Fi；接上后这里会显示可用地址");
         } else {
@@ -483,6 +516,31 @@ public final class MainActivity extends Activity {
             u.append("\n没有凭据时自动解锁无法工作（解锁会返回 credential_missing）");
         }
         unlockView.setText(u.toString());
+    }
+
+    /**
+     * The exact sentence a person can paste into an agent. It names the /doc URL,
+     * the auth source and the first two calls, so the agent does not have to guess
+     * the API from the CLI name.
+     */
+    private String agentPrompt(String host) {
+        return "打开 https://" + host + ":" + EnginePaths.PORT + "/doc 读取 OpenAPI 与鉴权说明；"
+                + "按 /doc 的 securitySchemes 完成 Bearer token 鉴权，"
+                + "然后用 /v1/ui/page、/v1/ui/tree、/v1/ui/observe 感知，"
+                + "用 /v1/ui/act、/v1/ui/readback 验证，结束 release 释放会话并锁屏。"
+                + "不要绕过 HUD，也不要把 SKIP 当 PASS。";
+    }
+
+    /** Copies the agent prompt; the token is deliberately not included. */
+    private void copyAgentPrompt() {
+        String host = lanAddress();
+        if (host.isEmpty()) host = "<手机IP>";
+        String text = agentPrompt(host);
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("Sextant agent", text));
+            detailView.setText("已复制 agent 接入说明（不含 token）");
+        }
     }
 
     /**
