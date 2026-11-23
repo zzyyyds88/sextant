@@ -727,11 +727,11 @@ IME(provider) ◀──content call── 守护（只接受 uid 0/2000/自身�
 {
   "schema": 1,
   "updated_at": "2026-11-16T19:00:00+08:00",
-  "daemon": { "pid": 17161, "version": "3.0.0", "uptime_sec": 120, "state": "running" },
+  "daemon": { "pid": 17161, "version": "4.0.0", "uptime_sec": 120, "state": "running" },
   "app": {
     "package": "com.sextant.pilot",
     "installed": true,
-    "version_name": "3.0.0",
+    "version_name": "4.0.0",
     "a11y": { "state": "OK", "detail": "bound", "component": "com.sextant.pilot/com.sextant.pilot.hud.RemoteA11yService", "compat": "com.sextant.pilot/com.google.android.accessibility.selecttospeak.SelectToSpeakService" },
     "bg": { "autostart": "allow", "bgcontrol": "noRestrict", "doze": true, "ok": true },
     "perms": { "idle": "OK", "runtime": "OK" }

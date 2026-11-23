@@ -22,7 +22,7 @@ import (
 var defaultSerial = os.Getenv("SEXTANT_SERIAL")
 
 // cliVersion is the CLI's own version, kept in step with the module.
-var cliVersion = "3.0.0"
+var cliVersion = "4.0.0"
 
 func main() {
 	args := os.Args[1:]

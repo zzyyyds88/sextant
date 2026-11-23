@@ -1,0 +1,14 @@
+Sextant
+Copyright (C) 2026 chopin-ksu
+
+This project is licensed under the GNU Affero General Public License,
+version 3 or later. See LICENSE.
+
+Third-party and component notices are retained in:
+- apps/pilot/licenses/LICENSE-hud.txt
+- apps/pilot/licenses/NOTICE-hud.txt
+- apps/pilot/licenses/NOTICE-ime.txt
+- apps/pilot/lib/LICENSE-scrcpy.txt
+- apps/pilot/lib/NOTICE-scrcpy.txt
+- apps/pc-cli/third_party/yaml/README.md
+- apps/pc-cli/third_party/yaml/LICENSE

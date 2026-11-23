@@ -274,7 +274,7 @@ func help() string {
 		groups[c.group] = append(groups[c.group], c)
 	}
 	var b strings.Builder
-	b.WriteString("sextant " + cliVersion + " — drive a sextant device from a computer\n")
+	b.WriteString("sextant " + cliVersion + " — drive an Android device from a computer\n")
 	for _, g := range order {
 		b.WriteString("\n" + g + ":\n")
 		list := groups[g]

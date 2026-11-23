@@ -48,13 +48,13 @@ release 模式不会自动生成 key；缺 `SEXTANT_KEYSTORE`、缺 `SEXTANT_KEY
 
 ```bash
 tools/scripts/build-module.sh modules/sextant-core
-REL=out/release-3.0.0
+REL=out/release-4.0.0
 mkdir -p "$REL"
-cp apps/pilot/dist/sextant-pilot-3.0.0.apk "$REL"/
+cp apps/pilot/dist/sextant-pilot-4.0.0.apk "$REL"/
 cp modules/sextant-core.zip "$REL"/
 cp apps/pc-cli/dist/sextant-linux-amd64 apps/pc-cli/dist/sextant-windows-amd64.exe "$REL"/
 cp docs/release-key.asc "$REL"/
-( cd "$REL" && sha256sum sextant-pilot-3.0.0.apk sextant-core.zip \
+( cd "$REL" && sha256sum sextant-pilot-4.0.0.apk sextant-core.zip \
     sextant-linux-amd64 sextant-windows-amd64.exe > SHA256SUMS )
 GNUPGHOME="$HOME/.chopin-release/gnupg" gpg --batch --pinentry-mode loopback \
   --passphrase-file "$HOME/.chopin-release-secrets/gpg.pass" \
@@ -67,7 +67,7 @@ GNUPGHOME="$HOME/.chopin-release/gnupg" gpg --batch --pinentry-mode loopback \
 gpg --import release-key.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum -c SHA256SUMS
-apksigner verify --print-certs sextant-pilot-3.0.0.apk
+apksigner verify --print-certs sextant-pilot-4.0.0.apk
 ```
 
 证书 SHA-256 必须是 `3bd6c103…`；GPG 指纹必须是 `61D77E…`。不一致就不要安装。

@@ -184,3 +184,8 @@ sextant/
 
 - 模块运行时目录：`/data/adb/sextant-core/`（配置、状态、日志、凭据、基线）。
 - 模块 ctl：`/data/adb/ksu/bin/sextant-core`（KernelSU 把该目录放进 `su` 的 PATH）。
+
+## 许可证
+
+本项目按 **AGPL-3.0-or-later** 发布，见 [`LICENSE`](LICENSE) 与 [`NOTICE`](NOTICE)。
+HUD、IME、scrcpy 与 vendored YAML 的第三方声明保留在各自目录。

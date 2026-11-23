@@ -49,7 +49,7 @@ import (
 )
 
 // Version is stamped at build time.
-var Version = "3.0.0-dev"
+var Version = "4.0.0-dev"
 
 // Paths bundles every runtime location derived from the data dir.
 type Paths struct {

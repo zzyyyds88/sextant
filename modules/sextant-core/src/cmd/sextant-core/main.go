@@ -24,7 +24,7 @@ import (
 // It must be a plain string variable initialised with a literal: `-X` cannot
 // rewrite a variable whose initialiser is another package's value, and the
 // failure is silent — the binary just keeps reporting the default.
-var version = "3.0.0-dev"
+var version = "4.0.0-dev"
 
 func main() {
 	args := os.Args[1:]
