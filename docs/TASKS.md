@@ -53,7 +53,7 @@
 | S20 | D29 P2 / D33：增量树 diff、内存 metrics、页面指纹/版本与地图/配方漂移 | `DONE` | `diff` 同页 0 变化、切屏 added 49/removed 169、过期 404；`metrics` 计数增长且 <2KB；地图漂移正反例；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0 |
 | S21 | D30 拟人操作与验证码分流：种子化落点/间隔/限速、challenge 分类与滑块自解、risk/cooldown、handover | `DONE`（检测分流部分 SKIP 说明见债务） | 同 seed 两次 tap 落点一致；10 次 tap interval 702–1482ms（区间 700–1600）、dispatch 36–62ms；handover 后注入 409、return 后恢复；设置页 challenge=none；滑块/短信验证码页无真机样本，分类与分流以单测覆盖（22 项新增） |
 | S23 | D32 agent 引导入口：`/doc` 的 `x-chopin-guidance`（install/use）与 SKILL.md「从零安装」 | `DONE` | `GET /doc` 返回 10 步、两阶段；`/doc/skill` 含「从零安装」；init 命令只经 stdin；单测锁定字段与阶段 |
-| S27 | D38 Sextant 全量技术改名：CLI/模块/APK/状态目录/请求头/环境变量 + 迁移脚本 | `DOING` | 静态门禁 28/0；已构建 `sextant-core.zip`、`sextant-pilot` APK、`sextant` CLI；待真机迁移演练 |
+| S27 | D38 Sextant 全量技术改名：CLI/模块/APK/状态目录/请求头/环境变量 + 迁移脚本 | `DONE` | 静态门禁 28/0；真机迁移完成（旧模块/APK/守护消失）；doctor 8/8；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0 |
 | S26 | D37 会话活动信号与僵尸回收：业务请求续期、`zombie_sec` 300s、CLI 本地会话 + heartbeat | `DONE` | 真机：只心跳不操作 6s 被回收并锁屏；持续 page 6s 不被回收；release 锁屏；CLI 后续命令自动带 session；acceptance 41/0/0、journey 21/0（首次 map 抽样失败重跑通过） |
 | S25 | D36 任务收尾与屏幕联动：`finishTask`、`stale_sec` 180s | `DONE` | 正常 release 后 `task finished (release); screen locked` 且 screen OFF/keyguard true；短 stale 配置下异常回收并锁屏；HUD stop 也收尾锁屏；acceptance 41/0/0、journey 21/0 |
 | S24 | D35 会话后台回收：`session.reap_sec` 后台 reaper | `DONE` | 真机 idle_sec=3/reap_sec=1：claim 后 8s 会话消失，审计 `session: reaped 1 expired session(s)`；单测周期/取消/0 禁用；acceptance 41/0/0、journey 21/0 |
@@ -90,6 +90,7 @@
 | 2026-11-19 09:10 | **D31 地图跑到队列耗尽** | 19 屏、complete=true；seed=1 limit=5 exact 5/5、same_app 5/5 | `/root/.chopin/maps/com.android.settings.yaml`；本轮 bench 输出 |
 | 2026-11-19 09:30 | **D32 引导入口** | `/doc` 10 步（install 5 + use 5）；`/doc/skill` 从零安装；真机 curl 可读 | 本轮 curl 输出；提交 `D32` |
 | 2026-11-21 16:13 | **S20/D33 深度能力（剪贴板之外的三项）** | metrics 22 请求/多路由、响应 1.3KB；diff 同页零变化、切屏 added 49/removed 169、过期 404；地图漂移 live/drift 两例 | `out/spike-*.json` |
+| 2026-11-23 08:23 | **D38 Sextant 全量改名真机迁移** | 旧 `chopin-core` / `com.chopin.pilot` / 旧守护均消失；新包 `com.sextant.pilot` + a11y/后台正常；doctor 8/8；acceptance 41/0/0；journey 21/0 | 迁移备份保留在私有环境 |
 | 2026-11-22 15:40 | **D37 会话活动与僵尸回收回归** | 僵尸回收+锁屏、持续业务操作免回收、release 锁屏均通过；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0（首次 map 抽样 landed screen_0，重跑通过） | `acceptance`（私有验收证据） / `journey`（私有验收证据） |
 | 2026-11-22 15:10 | **D36 任务收尾与屏幕联动回归** | release 收尾锁屏、异常回收锁屏、HUD stop 收尾均写审计；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0 | `acceptance`（私有验收证据） / `journey`（私有验收证据） |
 | 2026-11-22 14:53 | **D35 会话后台回收回归** | acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0；短超时真机会话被后台回收并写审计 | `acceptance`（私有验收证据） / `journey`（私有验收证据） |

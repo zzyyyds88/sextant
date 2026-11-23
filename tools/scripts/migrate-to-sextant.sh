@@ -46,6 +46,7 @@ die()  { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 
 [ -n "$SERIAL" ] || die "set SERIAL to the adb serial (host:port)"
 [ "$CONFIRM" = "1" ] || die "refusing to run without CONFIRM=1 (this uninstalls the old APK and module)"
+export SEXTANT_SERIAL="$SERIAL"
 [ -f "$ZIP" ] || die "missing $ZIP (run tools/scripts/build-module.sh modules/sextant-core)"
 [ -f "$CLI" ] || die "missing $CLI (run apps/pc-cli/build.sh)"
 [ -n "$APK" ] && [ -f "$APK" ] || die "missing apps/pilot/dist/sextant-pilot-*.apk (run apps/pilot/build.sh)"
