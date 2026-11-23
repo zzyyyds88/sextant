@@ -4,13 +4,15 @@ Sextant 让电脑上的 agent 通过 `sextant` CLI 操作一台 Android 手机�
 
 ![Sextant Pilot 状态页](docs/assets/status-page.png)
 
+上图是手机上的状态页。agent 的入口是同一主机上的 `/doc`：手机显示 `https://<手机IP>:8443/ui/` 时，访问 `https://<手机IP>:8443/doc`。
+
 ## 把这句话发给 agent
 
 ```text
-你通过 sextant CLI 控制一台 Android 手机：先运行 sextant doctor，再读 sextant skill；用 page/tree/observe 感知，用 act/list/readback 验证；长任务用 heartbeat，结束用 release 释放会话并锁屏；不要绕过 HUD，也不要把 SKIP 当 PASS。
+打开手机状态页上显示的服务地址，访问同一主机的 /doc（OpenAPI 与鉴权说明）；按 /doc 完成 Bearer token 鉴权，然后用 /v1/* 感知和操作：page/tree/observe 看屏，act/list/readback 验证，结束 release 释放会话并锁屏；不要绕过 HUD，也不要把 SKIP 当 PASS。
 ```
 
-完整手册在 `sextant skill`（或设备上的 `GET /doc/skill`）。上面这一句只负责把 agent 带进入口。
+完整手册在设备上的 `GET /doc/skill`；电脑装了 CLI 时也可以用 `sextant skill`。上面这一句只负责把 agent 带进入口。
 
 ## 初始化
 
@@ -72,7 +74,20 @@ sextant doctor
 
 8 项都 `ok` 后再使用。`doctor` 会检查配对、守护、a11y、后台、helper、前台页面等。
 
-### 5. 第一次看屏
+### 5. 把 `/doc` 交给 agent
+
+手机状态页显示 `https://<手机IP>:8443/ui/`；agent 不需要先有 `sextant` 命令，直接访问同一主机的公开文档：
+
+```bash
+curl -k https://<手机IP>:8443/doc          # OpenAPI + x-sextant-guidance
+curl -k https://<手机IP>:8443/doc/skill    # agent 操作手册
+```
+
+`/doc` 是公开入口；先读里面的 `securitySchemes` 和 `x-sextant-guidance`，按文档完成 Bearer token 配对/配置，再调用 `/v1/*`。CLI 只是这些 HTTP 调用的本地封装，适合人操作；agent 可以完全按 `/doc` 的合同走 HTTP。
+
+如果还没有 token，先按 `/doc` 里的配对步骤完成一次配对；token 只交给 agent 的 HTTP 客户端，不写日志、不发到聊天里。
+
+### 6. 第一次看屏
 
 ```bash
 sextant page                    # 前台包/组件/窗口/键盘/页面指纹
@@ -129,13 +144,16 @@ agent 不应绕过 HUD；验证码或需要人工判断的页面用 `sextant han
 一句话版本已在上方；需要更细的步骤时，把下面这段也交给 agent：
 
 ```text
-你通过 sextant CLI 控制一台 Android 手机。按顺序工作：
+你通过 HTTP 控制一台 Android 手机。按顺序工作：
 
-1. 运行 `sextant doctor`。任一项失败就报告原文和复现命令，不要猜。
-2. 阅读 `sextant skill`（或 GET /doc/skill），遵守其中的原语、错误语义和配方格式。
-3. 感知用 `sextant page` / `tree` / `observe`；操作前 `sextant claim`，用
-   `sextant act` / `list` / `readback` 并验证结果，不要以“命令返回 ok”代替生效。
-4. 长任务用 `sextant heartbeat` 保活；结束用 `sextant release`，它会释放会话并锁屏收尾。
+1. 打开手机状态页显示的服务地址，访问同一主机的 `/doc`（公开 OpenAPI）。
+   读 `x-sextant-guidance`、`securitySchemes` 和 `/doc/skill`，按文档完成
+   Bearer token 配对/配置；不要猜 token，也不要把 token 写进日志或回复。
+2. 先确认 `GET /v1/health` 和鉴权后的 `GET /v1/status`；失败就报告原文和复现命令。
+3. 感知用 `/v1/ui/page`、`/v1/ui/tree`、`/v1/ui/observe`；操作前 claim，
+   用 `/v1/ui/act`、`/v1/ui/list`、`/v1/ui/readback` 并验证结果，
+   不要以 HTTP 200 代替生效。
+4. 长任务用 `/v1/sessions/{id}/heartbeat` 保活；结束用 release 释放会话并锁屏。
 5. 不绕过 HUD/handover；不要把 SKIP 当 PASS；不要伪造成功。
 ```
 
