@@ -90,6 +90,7 @@
 | 2026-11-19 09:10 | **D31 地图跑到队列耗尽** | 19 屏、complete=true；seed=1 limit=5 exact 5/5、same_app 5/5 | `/root/.chopin/maps/com.android.settings.yaml`；本轮 bench 输出 |
 | 2026-11-19 09:30 | **D32 引导入口** | `/doc` 10 步（install 5 + use 5）；`/doc/skill` 从零安装；真机 curl 可读 | 本轮 curl 输出；提交 `D32` |
 | 2026-11-21 16:13 | **S20/D33 深度能力（剪贴板之外的三项）** | metrics 22 请求/多路由、响应 1.3KB；diff 同页零变化、切屏 added 49/removed 169、过期 404；地图漂移 live/drift 两例 | `out/spike-*.json` |
+| 2026-11-23 09:00 | **Sextant 4.0.0 公开发布** | GitHub Release `v4.0.0`，tag 指向 4.0.0 源码；资产 APK/模块/CLI/校验和/GPG/LICENSE/NOTICE 齐全 | `https://github.com/zzyyyds88/sextant/releases/tag/v4.0.0` |
 | 2026-11-23 08:23 | **D38 Sextant 全量改名真机迁移** | 旧 `chopin-core` / `com.chopin.pilot` / 旧守护均消失；新包 `com.sextant.pilot` + a11y/后台正常；doctor 8/8；acceptance 41/0/0；journey 21/0 | 迁移备份保留在私有环境 |
 | 2026-11-22 15:40 | **D37 会话活动与僵尸回收回归** | 僵尸回收+锁屏、持续业务操作免回收、release 锁屏均通过；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0（首次 map 抽样 landed screen_0，重跑通过） | `acceptance`（私有验收证据） / `journey`（私有验收证据） |
 | 2026-11-22 15:10 | **D36 任务收尾与屏幕联动回归** | release 收尾锁屏、异常回收锁屏、HUD stop 收尾均写审计；acceptance PASS 41 / FAIL 0 / SKIP 0；journey PASS 21 / FAIL 0 | `acceptance`（私有验收证据） / `journey`（私有验收证据） |
