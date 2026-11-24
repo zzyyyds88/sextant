@@ -196,7 +196,7 @@ tools/scripts/build-module.sh modules/sextant-core
 - 设备端模块由 KernelSU 以 root 启动；APK 零 root，只读守护发布的 `status.json`，唯一特权动作是经 stdin 写解锁凭据。
 - release APK 使用专用签名 key，证书 SHA-256 `3bd6c103…`；发布资产附 `SHA256SUMS` 与 GPG 分离签名，公钥见 [`docs/release-key.asc`](docs/release-key.asc)，验证步骤见 [`docs/RELEASE.md`](docs/RELEASE.md)。
 - keystore、密码、ADB key、解锁图案、SIM PIN 不入 Git、不发布、不打印。
-- 当前发布：[v4.0.0](https://github.com/zzyyyds88/sextant/releases/tag/v4.0.0)。
+- 当前发布：[v4.0.1](https://github.com/zzyyyds88/sextant/releases/tag/v4.0.1)。
 
 ## 文档
 

@@ -53,7 +53,7 @@ if [ ! -f "$DATA/config/unlock-secret" ] && [ -f "$MODPATH/config/unlock-secret"
     chmod 0600 "$DATA/config/unlock-secret"
 fi
 
-ui_print "- Sextant Core 4.0.0 installed"
+ui_print "- Sextant Core 4.0.1 installed"
 ui_print "- runtime dir: $DATA"
 ui_print "- after reboot the daemon starts as root; no allowlist step is needed"
 ui_print "- pair a PC with: adb shell su -c 'sextant-core ctl pair new --agent pc'"

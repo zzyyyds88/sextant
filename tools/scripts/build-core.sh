@@ -10,7 +10,7 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 SRC="$ROOT/modules/sextant-core/src"
 OUT="$ROOT/modules/sextant-core/bin/sextant-core"
 GO=${GO:-$ROOT/tools/go/bin/go}
-VERSION=${VERSION:-4.0.0}
+VERSION=${VERSION:-4.0.1}
 
 [ -x "$GO" ] || { echo "go not found: $GO" >&2; exit 1; }
 [ -d "$SRC" ] || { echo "no source: $SRC" >&2; exit 1; }
